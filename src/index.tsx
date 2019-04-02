@@ -5,7 +5,7 @@ Network.open_socket()
 
 let connect_button = document.getElementById('connect-button');
 connect_button.addEventListener('click', () => {
-	let textbox = document.getElemenyById('textbox');
+	let textbox = document.getElementById('textbox') as HTMLInputElement;
 	Network.full_connect(textbox.value);
 
 	let start_button = document.getElementById('start-button');

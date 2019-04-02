@@ -4,7 +4,7 @@ const Peer = require('peerjs');
 let peer = new Peer();
 
 export class Buffer { 
-	private buffer = []
+	private buffer: any[] = []
 	private filled = false;
 
 	constructor(
@@ -17,20 +17,20 @@ export class Network {
 	private static unreliable_connections: { [id: string]: DataConnection } = []
 
 	static open_socket(): void { 
-		peer.on('open', (id) => console.log('My peer id is: ' + id));
+		peer.on('open', (id: string) => console.log('My peer id is: ' + id));
 		peer.on('connection', Network.connection_opened);
 	}
 
 	static connection_opened(conn: DataConnection) {
-		if (conn.reliable) reliable_connections[conn.peer] = conn
-		else unreliable_connections[conn.peer] = conn
+		if (conn.reliable) Network.reliable_connections[conn.peer] = conn
+		else Network.unreliable_connections[conn.peer] = conn
 	}
 
-	static full_connect(peerId: string): void {
-		Network.open_reliable();
+	static full_connect(peer_id: string): void {
+		Network.open_reliable(peer_id);
 
 		//TODO: Wait for promise resolution
-		Network.open_unreliable();
+		Network.open_unreliable(peer_id);
 
 		//TODO: Create a buffer for the client
 	}
@@ -44,12 +44,12 @@ export class Network {
 
 		// Keep retrying until we get a connection
 		setTimeout(() => {
-			if (unreliable_connections[peer_id] !== undefined) return
+			if (Network.unreliable_connections[peer_id] !== undefined) return
 			Network.open_unreliable(peer_id)
 		}, 1000)
 	}
 
 	static send_all_reliable(data: any) {
-		for (let conn of reliable_connections) conn.send(data);
+		for (let conn of Network.reliable_connections) conn.send(data);
 	}
 }

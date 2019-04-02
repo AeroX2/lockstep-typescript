@@ -1,5 +1,17 @@
+export class Entity {
+	x: number = 0;
+	y: number = 0;
+	vx: number = 0;
+	vy: number = 0;
+	radius: number;
+
+	update(canvas: HTMLCanvasElement): void {}
+	draw(ctx: CanvasRenderingContext2D): void {}
+	collision(e1: Entity, e2: Entity): void {}
+}
+
 export class Movable extends Entity {
-	update(canvas): void {
+	update(canvas: HTMLCanvasElement): void {
 		this.x += this.vx;
 		this.y += this.vy;
 
@@ -54,10 +66,4 @@ export class ElasticCollision extends Entity {
 			e2.vy += dvy;
 		}
 	}
-}
-
-export interface Entity {
-	update(canvas: Canvas): void
-	draw(ctx: Context2D): void
-	collision(e1: Entity, e2: Entity): void
 }
