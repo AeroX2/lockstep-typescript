@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --watch",
     "start": "webpack-dev-server --open",
-	"build": "webpack"
+    "build": "webpack"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
     "webpack-cli": "^3.3.0"
   },
   "dependencies": {
+    "@types/peerjs": "0.0.30",
     "peerjs": "^0.3.24"
   }
 }
