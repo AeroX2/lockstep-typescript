@@ -1,11 +1,16 @@
-import { Entity, Movable, ElasticCollision } from './entity';
+import { Entity, Movable, ElasticCollision, Collidable } from './entity';
+import { Input } from './input';
 
-export class Player extends Entity implements Movable,ElasticCollision { //,Collidable {
+export class Player extends Entity implements Movable,ElasticCollision,Collidable {
 	radius = 20;
+	speed = 0.5;
 
-	//collides(other_entity: Entity) {
-
-	//}
+	input(i: Input) {
+		if (i.up)    this.vy += this.speed;
+		if (i.down)  this.vy -= this.speed;
+		if (i.left)  this.vx -= this.speed;
+		if (i.right) this.vx += this.speed;
+	}
 
 	draw(ctx: CanvasRenderingContext2D): void {
 		ctx.fillStyle = 'green';
@@ -15,7 +20,7 @@ export class Player extends Entity implements Movable,ElasticCollision { //,Coll
 	}
 }
 
-export class OtherPlayer extends Entity implements Movable,ElasticCollision {
+export class OtherPlayer extends Player {
 	draw(ctx: CanvasRenderingContext2D): void {
 		ctx.fillStyle = 'red';
 		ctx.beginPath();

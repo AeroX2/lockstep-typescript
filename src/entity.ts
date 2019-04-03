@@ -7,6 +7,8 @@ export class Entity {
 
 	update(canvas: HTMLCanvasElement): void {}
 	draw(ctx: CanvasRenderingContext2D): void {}
+
+	collides(e1: Entity, e2: Entity): boolean { return false; }
 	collision(e1: Entity, e2: Entity): void {}
 }
 
@@ -34,6 +36,15 @@ export class Movable extends Entity {
 			this.y = canvas.height-this.radius;
 			this.vy = -this.vy*0.9;
 		}
+	}
+}
+
+//TODO: This should be eventually replaced with Shapes
+export class Collidable extends Entity {
+	collides(e1: Entity, e2: Entity) {
+		let dx = e1.x-e2.x;
+		let dy = e1.y-e2.y;
+		return Math.sqrt(dx*dx+dy*dy) < e1.radius+e2.radius
 	}
 }
 

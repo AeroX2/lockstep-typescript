@@ -19,7 +19,7 @@
     "webpack-cli": "^3.3.0"
   },
   "dependencies": {
-    "@types/peerjs": "0.0.30",
-    "peerjs": "^0.3.24"
+    "peerjs": "^0.3.24",
+    "webpack-dev-server": "^3.2.1"
   }
 }
