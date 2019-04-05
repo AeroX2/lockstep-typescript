@@ -1,9 +1,15 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
-import { Input } from './input';
+import { Input } from './packets';
 
 export class Player extends Entity implements Movable,ElasticCollision,Collidable {
 	radius = 20;
 	speed = 0.5;
+
+	constructor(x: number, y: number) {
+		super();
+		this.x = x;
+		this.y = y;
+	}
 
 	input(i: Input) {
 		if (i.up)    this.vy += this.speed;

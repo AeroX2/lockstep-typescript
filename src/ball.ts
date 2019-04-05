@@ -10,7 +10,7 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 	}
 
 	draw(ctx: CanvasRenderingContext2D): void {
-		ctx.fillStyle = 'green';
+		ctx.fillStyle = 'blue';
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
 		ctx.fill();

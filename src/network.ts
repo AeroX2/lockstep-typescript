@@ -1,37 +1,44 @@
 import { DataConnection } from 'peerjs';
+import { Buffer } from './buffer';
 
 const Peer = require('peerjs');
 let peer = new Peer.default();
 
 export class Network {
 	public static BUFFER_SIZE = 8;
+	public static reliable_callbacks: Function[] = [];
+	public static unreliable_callbacks: Function[] = [];
+	public static mapping: Map<string, number> = new Map()
 
 	private static index = 0;
-	private static mapping: { [id: string]: number } = {}
+	private static local_id: string;
 	private static buffers: Buffer[] = [];
+
 	private static reliable_connections: DataConnection[] = []
 	private static unreliable_connections: DataConnection[] = []
+	private static latest_ack: number[] = [];
 
 	static open_socket(): void {
 		peer.on('open', (id: string) => {
 			console.log('My peer id is: ' + id)
-
-			Network.mapping[id] = Network.index;
-			Network.index++;
+			Network.local_id = id;
 		});
 		peer.on('connection', Network.connection_opened);
 	}
 
 	private static connection_opened(conn: DataConnection) {
 		console.log(`${conn.reliable ? 'Reliable' : 'Unreliable'} Connection opened with ${conn.peer}`)
-		let index = Network.mapping[conn.peer]
+		let index = Network.mapping.get(conn.peer)
 		if (index === undefined) {
 			index = Network.index;
 
-			Network.mapping[conn.peer] = index
+			Network.mapping.set(conn.peer, index);
 			Network.buffers.push(new Buffer(conn.peer))
-			Network.reliable_connections.push(null)
-			Network.unreliable_connections.push(null)
+			Network.latest_ack.push(0);
+
+			// Javascript is weird (let a = []; a[2] = 4; a == [empty,empty,4])
+			// Network.reliable_connections.push(null)
+			// Network.unreliable_connections.push(null)
 
 			Network.index++;
 		}
@@ -39,29 +46,35 @@ export class Network {
 		if (conn.reliable) {
 			Network.reliable_connections[index] = conn
 			conn.on('open', () => {
-				conn.on('data', Network.receive_reliable)
+				conn.on('data', (data: any) => { Network.receive_reliable(conn.peer, data) })
 
 				// Tell the other client about all the others clients we are connected to
-				conn.send({ 'others': Network.reliable_connections.slice(0,-1).map(e => e.peer) })
+				if (Network.reliable_connections.length-1 > 0) {
+					conn.send({ 'others': Network.reliable_connections.slice(0, -1).map(e => e.peer) })
+				}
 			});
 
 		} else {
 			Network.unreliable_connections[index] = conn
 			conn.on('open', () => {
-				conn.on('data', Network.receive_unreliable)
+				conn.on('data', (data: any) => { Network.receive_unreliable(conn.peer, data) })
 			});
 		}
 	}
 
 	static full_connect(peer_id: string): void {
 		console.log(`Making a connection with ${peer_id}`)
+		if (Network.local_id === peer_id) {
+			console.log('Trying to make a connection with ourself');
+			return;
+		}
 
-		if (Network.mapping[peer_id] !== undefined) {
+		if (Network.mapping.has(peer_id)) {
 			console.log(`Network connection with ${peer_id} already opened`)
 			return;
 		}
 
-		Network.mapping[peer_id] = Network.index;
+		Network.mapping.set(peer_id, Network.index);
 		Network.index++;
 
 		//TODO: Wait for promise resolution
@@ -76,7 +89,7 @@ export class Network {
 		let conn = peer.connect(peer_id, { reliable: true });
 		conn.on('open', () => {
 			Network.reliable_connections.push(conn)
-			conn.on('data', Network.receive_reliable)
+			conn.on('data', (data: any) => { Network.receive_reliable(conn.peer, data) })
 		});
 	}
 
@@ -84,29 +97,47 @@ export class Network {
 		let conn = peer.connect(peer_id, { reliable: false });
 		conn.on('open', () => {
 			Network.unreliable_connections.push(conn)
-			conn.on('data', Network.receive_unreliable)
+			conn.on('data', (data: any) => { Network.receive_unreliable(conn.peer, data) })
 		});
 
 		// Keep retrying until we get a connection
 		setTimeout(() => {
-			let index = Network.mapping[peer_id]
+			let index = Network.mapping.get(peer_id)
 			if (Network.unreliable_connections[index] !== undefined) return
 			Network.open_unreliable(peer_id)
 		}, 1000)
 	}
 
-	private static receive_reliable(data: any) {
+	private static receive_reliable(peer_id: string, data: any) {
+		console.log('Received reliable: ', data)
 		if (data['others'] !== undefined) {
 			for (let peer_id of data['others']) Network.full_connect(peer_id)
 		}
+		for (let callback of Network.reliable_callbacks) callback(peer_id, data);
 	}
 
-	private static receive_unreliable(data: any) {
+	private static receive_unreliable(peer_id: string, data: any) {
+		console.log('Received unreliable: ', data)
+		if (data['frame'] !== undefined) {
+			let index = Network.mapping.get(peer_id)
+			Network.latest_ack[index] = Math.max(Network.latest_ack[index], data.frame);
 
+			Network.buffers[index].add(data)
+		}
+
+		for (let callback of Network.unreliable_callbacks) callback(peer_id, data);
 	}
 
 	static send_all_reliable(data: any) {
-		for (let conn of Object.values(Network.reliable_connections)) conn.send(data);
+		for (let conn of Network.reliable_connections) conn.send(data);
+	}
+
+	static send_input_buffer(buffer: Buffer) {
+		for (let conn of Network.unreliable_connections) {
+			for (let input of buffer.items()) {
+				conn.send(input)
+			}
+		}
 	}
 
 	//TODO: Promise resolution

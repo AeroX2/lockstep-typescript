@@ -1,25 +1,30 @@
 import { Entity } from './entity'
 import { Player, OtherPlayer } from './player'
 import { Ball } from './ball'
-import { Input } from './input';
+import { Input } from './packets';
 import { Buffer } from './buffer';
+import { Network } from './network';
 
 export class Game {
 	frame: number = 0;
 	entities: Entity[] = []
-	canvas: HTMLCanvasElement = null
-	ctx: CanvasRenderingContext2D = null
+	canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
+	ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
 
 	current_input: Input = new Input(0, false, false, false, false);
 	local_player: Player = null;
 	input_buffer: Buffer = new Buffer('');
 	other_players: OtherPlayer[] = null;
 
-	setup(other_players: OtherPlayer[]): void {
-		this.canvas = document.getElementById('canvas') as HTMLCanvasElement
-		this.ctx = this.canvas.getContext('2d')
+	new_player(): Player {
+		let x = Math.round(Math.random()*this.canvas.width)
+		let y = Math.round(Math.random()*this.canvas.height/2+this.canvas.height/2)
+		this.local_player = new Player(x,y)
+		return this.local_player;
+	}
 
-		this.local_player = new Player()
+	setup(other_players: OtherPlayer[]): void {
+
 		this.other_players = other_players;
 
 		this.entities.push(this.local_player)
@@ -63,8 +68,6 @@ export class Game {
 		for (let i = 0; i < other_inputs.length; i++) this.other_players[i].input(other_inputs[i])
 
 		this.update();
-		this.draw();
-
 		this.frame++;
 	}
 
@@ -74,5 +77,9 @@ export class Game {
 
 	draw(): void {
 		for (let entity of this.entities) entity.draw(this.ctx);
+	}
+
+	add_input(): void {
+		if (this.input_buffer.length() < Network.BUFFER_SIZE) this.input_buffer.add(this.current_input);
 	}
 }
