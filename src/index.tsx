@@ -1,6 +1,8 @@
 import { Network } from './network';
 import { Game } from './game';
 import { Player, OtherPlayer } from './player';
+import { UnreliablePacket } from './unreliable_packets';
+import { StartPacket, PlayerPacket, ReliablePacket } from './reliable_packets';
 
 console.log('Starting up');
 Network.open_socket()
@@ -8,17 +10,16 @@ let game = new Game();
 
 //TODO: Probably a nicer way of doing this, instead of callbacks
 let other_players: OtherPlayer[] = []
-Network.reliable_callbacks.push((peer_id: string, data: any) => {
+Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
 	console.log('Network callback')
-	if (data === 'start') {
+	if (data instanceof StartPacket) {
 		console.log('Received start command')
 		let player = game.new_player();
-		Network.send_all_reliable({'player': {x: player.x, y: player.y}});
-	} else if (data['player'] !== undefined) {
+		Network.send_all_reliable(new PlayerPacket(player.x, player.y));
+	} else if (data instanceof PlayerPacket) {
 		console.log('Received player coords')
 
-		let player = data['player']
-		other_players.push(new OtherPlayer(player.x, player.y))
+		other_players.push(new OtherPlayer(data.x, data.y))
 
 		// We have got everyones elses positions, now we can start the game
 		if (other_players.length >= Object.keys(Network.mapping).length) {
@@ -28,10 +29,7 @@ Network.reliable_callbacks.push((peer_id: string, data: any) => {
 	}
 })
 
-Network.unreliable_callbacks.push((peer_id: string, data: any) => {
-	if (data['frame'] !== undefined) {
-		
-	}
+Network.unreliable_callbacks.push((peer_id: string, data: UnreliablePacket) => {
 })
 
 let connect_button = document.getElementById('connect-button');
@@ -42,10 +40,10 @@ connect_button.addEventListener('click', () => {
 	let start_button = document.getElementById('send-button');
 	start_button.addEventListener('click', () => {
 		console.log('Starting game')
-		Network.send_all_reliable('start')
+		Network.send_all_reliable(new StartPacket())
 
 		let player = game.new_player();
-		Network.send_all_reliable({'player': {x: player.x, y: player.y}});
+		Network.send_all_reliable(new PlayerPacket(player.x, player.y));
 	});
 });
 

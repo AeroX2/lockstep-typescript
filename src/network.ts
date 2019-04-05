@@ -1,6 +1,10 @@
 import { DataConnection } from 'peerjs';
 import { Buffer } from './buffer';
+import { Game } from './game';
+import { OtherClientsPacket, ReliablePacket } from './reliable_packets';
+import { UnreliablePacket } from './unreliable_packets';
 
+//TODO: Surely there is another way to resolve this
 const Peer = require('peerjs');
 let peer = new Peer.default();
 
@@ -16,7 +20,7 @@ export class Network {
 
 	private static reliable_connections: DataConnection[] = []
 	private static unreliable_connections: DataConnection[] = []
-	private static latest_ack: number[] = [];
+	private static lowest_missing_frame: number[] = [];
 
 	static open_socket(): void {
 		peer.on('open', (id: string) => {
@@ -34,7 +38,7 @@ export class Network {
 
 			Network.mapping.set(conn.peer, index);
 			Network.buffers.push(new Buffer(conn.peer))
-			Network.latest_ack.push(0);
+			Network.lowest_missing_frame.push(0);
 
 			// Javascript is weird (let a = []; a[2] = 4; a == [empty,empty,4])
 			// Network.reliable_connections.push(null)
@@ -46,7 +50,7 @@ export class Network {
 		if (conn.reliable) {
 			Network.reliable_connections[index] = conn
 			conn.on('open', () => {
-				conn.on('data', (data: any) => { Network.receive_reliable(conn.peer, data) })
+				conn.on('data', (data: ReliablePacket) => { Network.receive_reliable(conn.peer, data) })
 
 				// Tell the other client about all the others clients we are connected to
 				if (Network.reliable_connections.length-1 > 0) {
@@ -57,7 +61,7 @@ export class Network {
 		} else {
 			Network.unreliable_connections[index] = conn
 			conn.on('open', () => {
-				conn.on('data', (data: any) => { Network.receive_unreliable(conn.peer, data) })
+				conn.on('data', (data: UnreliablePacket) => { Network.receive_unreliable(conn.peer, data) })
 			});
 		}
 	}
@@ -89,7 +93,7 @@ export class Network {
 		let conn = peer.connect(peer_id, { reliable: true });
 		conn.on('open', () => {
 			Network.reliable_connections.push(conn)
-			conn.on('data', (data: any) => { Network.receive_reliable(conn.peer, data) })
+			conn.on('data', (data: ReliablePacket) => { Network.receive_reliable(conn.peer, data) })
 		});
 	}
 
@@ -97,7 +101,7 @@ export class Network {
 		let conn = peer.connect(peer_id, { reliable: false });
 		conn.on('open', () => {
 			Network.unreliable_connections.push(conn)
-			conn.on('data', (data: any) => { Network.receive_unreliable(conn.peer, data) })
+			conn.on('data', (data: UnreliablePacket) => { Network.receive_unreliable(conn.peer, data) })
 		});
 
 		// Keep retrying until we get a connection
@@ -108,34 +112,45 @@ export class Network {
 		}, 1000)
 	}
 
-	private static receive_reliable(peer_id: string, data: any) {
+	private static receive_reliable(peer_id: string, data: ReliablePacket) {
 		console.log('Received reliable: ', data)
-		if (data['others'] !== undefined) {
-			for (let peer_id of data['others']) Network.full_connect(peer_id)
+		data = ReliablePacket.convert(data)
+
+		if (data instanceof OtherClientsPacket) {
+			for (let peer_id of data.others) Network.full_connect(peer_id)
 		}
 		for (let callback of Network.reliable_callbacks) callback(peer_id, data);
 	}
 
-	private static receive_unreliable(peer_id: string, data: any) {
+	private static receive_unreliable(peer_id: string, data: UnreliablePacket) {
 		console.log('Received unreliable: ', data)
-		if (data['frame'] !== undefined) {
-			let index = Network.mapping.get(peer_id)
-			Network.latest_ack[index] = Math.max(Network.latest_ack[index], data.frame);
+		data = UnreliablePacket.convert(data)
+		// if (data['frame'] !== undefined) {
+		// 	if (data.frame < game.frame) return;
 
-			Network.buffers[index].add(data)
-		}
+		// 	let index = Network.mapping.get(peer_id)
+		// 	let buffer = Network.buffers[index];
+		// 	buffer.add(data)
+		// 	Network.lowest_missing_frame[index] = buffer.find_lowest(game.frame);
+		// }
 
-		for (let callback of Network.unreliable_callbacks) callback(peer_id, data);
+		// for (let callback of Network.unreliable_callbacks) callback(peer_id, data);
 	}
 
-	static send_all_reliable(data: any) {
-		for (let conn of Network.reliable_connections) conn.send(data);
+	static send_all_reliable(data: ReliablePacket) {
+		let raw_data = data.raw();
+		for (let conn of Network.reliable_connections) conn.send(raw_data);
 	}
 
 	static send_input_buffer(buffer: Buffer) {
-		for (let conn of Network.unreliable_connections) {
+		for (let index = 0; index < Network.unreliable_connections.length; index++) {
+			let conn = Network.unreliable_connections[index];
 			for (let input of buffer.items()) {
-				conn.send(input)
+
+				let input_copy = Object.assign({ack: 0}, input)
+				if (input.frame >= Network.lowest_missing_frame[index]) {
+					conn.send(input_copy)
+				}
 			}
 		}
 	}

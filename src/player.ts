@@ -1,5 +1,5 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
-import { Input } from './packets';
+import { InputPacket } from './unreliable_packets';
 
 export class Player extends Entity implements Movable,ElasticCollision,Collidable {
 	radius = 20;
@@ -11,7 +11,7 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 		this.y = y;
 	}
 
-	input(i: Input) {
+	input(i: InputPacket) {
 		if (i.up)    this.vy += this.speed;
 		if (i.down)  this.vy -= this.speed;
 		if (i.left)  this.vx -= this.speed;

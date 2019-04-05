@@ -1,7 +1,7 @@
 import { Entity } from './entity'
 import { Player, OtherPlayer } from './player'
 import { Ball } from './ball'
-import { Input } from './packets';
+import { InputPacket } from './unreliable_packets';
 import { Buffer } from './buffer';
 import { Network } from './network';
 
@@ -11,7 +11,7 @@ export class Game {
 	canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
 
-	current_input: Input = new Input(0, false, false, false, false);
+	current_input: InputPacket = new InputPacket(0, false, false, false, false);
 	local_player: Player = null;
 	input_buffer: Buffer = new Buffer('');
 	other_players: OtherPlayer[] = null;
@@ -63,7 +63,7 @@ export class Game {
 		}
 	}
 
-	simulate(other_inputs: Input[]): void {
+	simulate(other_inputs: InputPacket[]): void {
 		this.local_player.input(this.input_buffer.popleft());
 		for (let i = 0; i < other_inputs.length; i++) this.other_players[i].input(other_inputs[i])
 
