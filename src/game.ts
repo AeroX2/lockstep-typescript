@@ -78,9 +78,17 @@ export class Game {
 
 	update(): void {
 		for (let entity of this.entities) entity.update(this.canvas);
+
+		for (let entity of this.entities) {
+			for (let other_entity of this.entities) {
+				if (entity === other_entity) continue;
+				if (entity.collides(other_entity)) entity.collision(other_entity)
+			}
+		}
 	}
 
 	draw(): void {
+		this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height)
 		for (let entity of this.entities) entity.draw(this.ctx);
 	}
 

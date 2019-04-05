@@ -12,8 +12,8 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 	}
 
 	input(i: InputPacket) {
-		if (i.up)    this.vy += this.speed;
-		if (i.down)  this.vy -= this.speed;
+		if (i.up)    this.vy -= this.speed;
+		if (i.down)  this.vy += this.speed;
 		if (i.left)  this.vx -= this.speed;
 		if (i.right) this.vx += this.speed;
 	}
@@ -34,3 +34,13 @@ export class OtherPlayer extends Player {
 		ctx.fill();
 	}
 }
+
+function applyMixins(derivedCtor: any, baseCtors: any[]) {
+    baseCtors.forEach(baseCtor => {
+        Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
+            Object.defineProperty(derivedCtor.prototype, name, Object.getOwnPropertyDescriptor(baseCtor.prototype, name));
+        });
+    });
+}
+applyMixins(Player, [Movable,ElasticCollision,Collidable])
+applyMixins(OtherPlayer, [Movable,ElasticCollision,Collidable])

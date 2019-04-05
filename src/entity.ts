@@ -41,38 +41,38 @@ export class Movable extends Entity {
 
 //TODO: This should be eventually replaced with Shapes
 export class Collidable extends Entity {
-	collides(e1: Entity, e2: Entity) {
-		let dx = e1.x-e2.x;
-		let dy = e1.y-e2.y;
-		return Math.sqrt(dx*dx+dy*dy) < e1.radius+e2.radius
+	collides(e2: Entity) {
+		let dx = this.x-e2.x;
+		let dy = this.y-e2.y;
+		return Math.sqrt(dx*dx+dy*dy) < this.radius+e2.radius
 	}
 }
 
 export class ElasticCollision extends Entity {
-	collision(e1: Entity, e2: Entity) {
-		let dx = e2.x-e1.x;
-		let dy = e2.y-e1.y;
+	collision(e2: Entity) {
+		let dx = e2.x-this.x;
+		let dy = e2.y-this.y;
 		let distance = Math.sqrt(dx*dx+dy*dy);
-		if (distance < e1.radius+e2.radius) {
+		if (distance < this.radius+e2.radius) {
 			let normalx = dx/distance;
 			let normaly = dy/distance;
 
-			let midx = (e1.x+e2.x)/2
-			let midy = (e1.y+e2.y)/2
-			e1.x = midx - normalx * e1.radius;
-			e1.y = midy - normaly * e1.radius;
+			let midx = (this.x+e2.x)/2
+			let midy = (this.y+e2.y)/2
+			this.x = midx - normalx * this.radius;
+			this.y = midy - normaly * this.radius;
 			e2.x = midx + normalx * e2.radius;
 			e2.y = midy + normaly * e2.radius;
 
-			let vdx = e1.vx-e2.vx;
-			let vdy = e1.vy-e2.vy;
+			let vdx = this.vx-e2.vx;
+			let vdy = this.vy-e2.vy;
 
 			let dot = vdx*normalx+vdy*normaly
 			let dvx = dot*normalx;
 			let dvy = dot*normaly;
 
-			e1.vx -= dvx;
-			e1.vy -= dvy;
+			this.vx -= dvx;
+			this.vy -= dvy;
 			e2.vx += dvx;
 			e2.vy += dvy;
 		}
