@@ -22,7 +22,7 @@ Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
 		other_players.push(new OtherPlayer(data.x, data.y))
 
 		// We have got everyones elses positions, now we can start the game
-		if (other_players.length >= Object.keys(Network.mapping).length) {
+		if (other_players.length >= Network.mapping.size) {
 			game.setup(other_players)
 			loop();
 		} 
@@ -36,15 +36,15 @@ let connect_button = document.getElementById('connect-button');
 connect_button.addEventListener('click', () => {
 	let textbox = document.getElementById('textbox') as HTMLInputElement;
 	Network.full_connect(textbox.value);
+});
 
-	let start_button = document.getElementById('send-button');
-	start_button.addEventListener('click', () => {
-		console.log('Starting game')
-		Network.send_all_reliable(new StartPacket())
+let start_button = document.getElementById('send-button');
+start_button.addEventListener('click', () => {
+	console.log('Starting game')
+	Network.send_all_reliable(new StartPacket())
 
-		let player = game.new_player();
-		Network.send_all_reliable(new PlayerPacket(player.x, player.y));
-	});
+	let player = game.new_player();
+	Network.send_all_reliable(new PlayerPacket(player.x, player.y));
 });
 
 let fps = 1000/60

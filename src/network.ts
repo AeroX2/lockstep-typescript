@@ -128,10 +128,11 @@ export class Network {
 	}
 
 	private static receive_unreliable(peer_id: string, data: UnreliablePacket) {
-		// console.log('Received unreliable: ', data)
 		data = UnreliablePacket.convert(data)
 		if (data instanceof InputPacket) {
 			if (data.frame < Game.frame) return;
+
+			// console.log('Received input: ', data, 'from', peer_id)
 
 			let index = Network.mapping.get(peer_id)
 			let buffer = Network.buffers[index];

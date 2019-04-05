@@ -9,6 +9,7 @@ export class Game {
 	//TODO: Make this not a static variable?
 	public static frame: number = 0;
 
+	private running = false;
 	private entities: Entity[] = []
 	private canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	private ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
@@ -28,6 +29,10 @@ export class Game {
 	}
 
 	setup(other_players: OtherPlayer[]): void {
+		if (this.running) {
+			throw "Setup has been called twice something has gone horribly wrong"
+		} 
+		this.running = true;
 
 		this.other_players = other_players;
 
@@ -80,6 +85,10 @@ export class Game {
 		for (let entity of this.entities) entity.update(this.canvas);
 
 		for (let entity of this.entities) {
+
+			// Ignore players for the moment
+			if (entity instanceof Player) continue;
+
 			for (let other_entity of this.entities) {
 				if (entity === other_entity) continue;
 				if (entity.collides(other_entity)) entity.collision(other_entity)
