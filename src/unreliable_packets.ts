@@ -23,7 +23,7 @@ export class InputPacket extends UnreliablePacket {
     }
 }
 
-export class AckPack extends UnreliablePacket {
+export class AckPacket extends UnreliablePacket {
     constructor(
         public ack: number,
     ) {

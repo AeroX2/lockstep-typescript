@@ -6,15 +6,19 @@ import { Buffer } from './buffer';
 import { Network } from './network';
 
 export class Game {
-	frame: number = 0;
-	entities: Entity[] = []
-	canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
-	ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
+	//TODO: Make this not a static variable?
+	public static frame: number = 0;
 
-	current_input: InputPacket = new InputPacket(0, false, false, false, false);
-	local_player: Player = null;
-	input_buffer: Buffer = new Buffer('');
-	other_players: OtherPlayer[] = null;
+	private entities: Entity[] = []
+	private canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
+	private ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
+ 
+	public current_input: InputPacket = new InputPacket(0, false, false, false, false);
+	private input_buffer: Buffer = new Buffer('');
+	public old_input_buffer: Buffer = new Buffer('');
+ 
+	private local_player: Player = null;
+	private other_players: OtherPlayer[] = null;
 
 	new_player(): Player {
 		let x = Math.round(Math.random()*this.canvas.width)
@@ -49,17 +53,17 @@ export class Game {
 		this.entities = this.entities.concat(balls);
 
 		window.onkeydown = (e) => {
-			if (e.key == 'ArrowUp') this.current_input.up = true;
-			if (e.key == 'ArrowDown') this.current_input.down = true;
-			if (e.key == 'ArrowLeft') this.current_input.left = true;
-			if (e.key == 'ArrowRight') this.current_input.right = true;
+			if (e.key === 'ArrowUp') this.current_input.up = true;
+			if (e.key === 'ArrowDown') this.current_input.down = true;
+			if (e.key === 'ArrowLeft') this.current_input.left = true;
+			if (e.key === 'ArrowRight') this.current_input.right = true;
 		}
 
 		window.onkeyup = (e) => {
-			if (e.key == 'ArrowUp') this.current_input.up = false;
-			if (e.key == 'ArrowDown') this.current_input.down = false;
-			if (e.key == 'ArrowLeft') this.current_input.left = false;
-			if (e.key == 'ArrowRight') this.current_input.right = false;
+			if (e.key === 'ArrowUp') this.current_input.up = false;
+			if (e.key === 'ArrowDown') this.current_input.down = false;
+			if (e.key === 'ArrowLeft') this.current_input.left = false;
+			if (e.key === 'ArrowRight') this.current_input.right = false;
 		}
 	}
 
@@ -68,7 +72,8 @@ export class Game {
 		for (let i = 0; i < other_inputs.length; i++) this.other_players[i].input(other_inputs[i])
 
 		this.update();
-		this.frame++;
+
+		Game.frame++;
 	}
 
 	update(): void {
@@ -80,6 +85,13 @@ export class Game {
 	}
 
 	add_input(): void {
-		if (this.input_buffer.length() < Network.BUFFER_SIZE) this.input_buffer.add(this.current_input);
+		if (this.input_buffer.length() < Network.BUFFER_SIZE) {
+			let input_copy = Object.create(this.current_input)
+			input_copy = Object.assign(input_copy, this.current_input)
+
+			this.input_buffer.add(input_copy);
+			this.old_input_buffer.add(input_copy);
+			this.current_input.frame++;
+		} 
 	}
 }

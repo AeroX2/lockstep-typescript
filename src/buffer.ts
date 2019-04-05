@@ -19,7 +19,7 @@ export class Buffer {
     
     public add(data: InputPacket) {
         //TODO: Replace this with a more efficient SortedSet
-        if (!this.buffer.map(e => e.frame).includes(data.frame)) this.buffer.push(data)
+        if (!this.buffer.map(v => v.frame).includes(data.frame)) this.buffer.push(data)
         this.buffer = this.buffer.sort((a,b) => a.frame - b.frame)
 
         if (this.buffer.length > Network.BUFFER_SIZE) this.filled = true;
@@ -35,6 +35,10 @@ export class Buffer {
             }
         }
         return this.buffer[this.buffer.length-1].frame
+    }
+
+    public remove_old(frame: number) {
+        this.buffer.splice(0, this.buffer.findIndex(v => v.frame === frame))
     }
 
     public popleft() {

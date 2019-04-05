@@ -2,7 +2,7 @@ import { DataConnection } from 'peerjs';
 import { Buffer } from './buffer';
 import { Game } from './game';
 import { OtherClientsPacket, ReliablePacket } from './reliable_packets';
-import { UnreliablePacket } from './unreliable_packets';
+import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets';
 
 //TODO: Surely there is another way to resolve this
 const Peer = require('peerjs');
@@ -16,11 +16,13 @@ export class Network {
 
 	private static index = 0;
 	private static local_id: string;
-	private static buffers: Buffer[] = [];
+	public static buffers: Buffer[] = [];
 
 	private static reliable_connections: DataConnection[] = []
 	private static unreliable_connections: DataConnection[] = []
-	private static lowest_missing_frame: number[] = [];
+
+	private static frame_we_are_missing: number[] = [];
+	private static frame_they_are_missing: number[] = [];
 
 	static open_socket(): void {
 		peer.on('open', (id: string) => {
@@ -30,21 +32,24 @@ export class Network {
 		peer.on('connection', Network.connection_opened);
 	}
 
+	private static setup_connection(peer_id: string) {
+		Network.mapping.set(peer_id, Network.index);
+		Network.buffers.push(new Buffer(peer_id))
+		Network.frame_we_are_missing.push(0);
+		Network.index++;
+	}
+
 	private static connection_opened(conn: DataConnection) {
 		console.log(`${conn.reliable ? 'Reliable' : 'Unreliable'} Connection opened with ${conn.peer}`)
 		let index = Network.mapping.get(conn.peer)
 		if (index === undefined) {
 			index = Network.index;
 
-			Network.mapping.set(conn.peer, index);
-			Network.buffers.push(new Buffer(conn.peer))
-			Network.lowest_missing_frame.push(0);
+			Network.setup_connection(conn.peer)
 
 			// Javascript is weird (let a = []; a[2] = 4; a == [empty,empty,4])
 			// Network.reliable_connections.push(null)
 			// Network.unreliable_connections.push(null)
-
-			Network.index++;
 		}
 
 		if (conn.reliable) {
@@ -54,7 +59,8 @@ export class Network {
 
 				// Tell the other client about all the others clients we are connected to
 				if (Network.reliable_connections.length-1 > 0) {
-					conn.send({ 'others': Network.reliable_connections.slice(0, -1).map(e => e.peer) })
+					let packet = new OtherClientsPacket(Network.reliable_connections.slice(0, -1).map(e => e.peer))
+					conn.send(packet.raw())
 				}
 			});
 
@@ -78,8 +84,7 @@ export class Network {
 			return;
 		}
 
-		Network.mapping.set(peer_id, Network.index);
-		Network.index++;
+		Network.setup_connection(peer_id)
 
 		//TODO: Wait for promise resolution
 		Network.open_unreliable(peer_id);
@@ -125,14 +130,17 @@ export class Network {
 	private static receive_unreliable(peer_id: string, data: UnreliablePacket) {
 		console.log('Received unreliable: ', data)
 		data = UnreliablePacket.convert(data)
-		// if (data['frame'] !== undefined) {
-		// 	if (data.frame < game.frame) return;
+		if (data instanceof InputPacket) {
+			if (data.frame < Game.frame) return;
 
-		// 	let index = Network.mapping.get(peer_id)
-		// 	let buffer = Network.buffers[index];
-		// 	buffer.add(data)
-		// 	Network.lowest_missing_frame[index] = buffer.find_lowest(game.frame);
-		// }
+			let index = Network.mapping.get(peer_id)
+			let buffer = Network.buffers[index];
+			buffer.add(data)
+			Network.frame_we_are_missing[index] = buffer.find_lowest(Game.frame);
+		} else if (data instanceof AckPacket) {
+			let index = Network.mapping.get(peer_id)
+			Network.frame_they_are_missing[index] = data.ack
+		}
 
 		// for (let callback of Network.unreliable_callbacks) callback(peer_id, data);
 	}
@@ -143,16 +151,23 @@ export class Network {
 	}
 
 	static send_input_buffer(buffer: Buffer) {
+		let data = buffer.items().map(v => v.raw())
 		for (let index = 0; index < Network.unreliable_connections.length; index++) {
 			let conn = Network.unreliable_connections[index];
-			for (let input of buffer.items()) {
 
-				let input_copy = Object.assign({ack: 0}, input)
-				if (input.frame >= Network.lowest_missing_frame[index]) {
-					conn.send(input_copy)
+			let lowest_ack = Network.frame_they_are_missing[index]
+			for (let input of data) {
+				if (input.frame >= lowest_ack) {
+					conn.send(input)
 				}
 			}
+
+			let lowest_frame = Network.frame_we_are_missing[index]
+			conn.send(new AckPacket(lowest_frame).raw())
 		}
+
+		let lowest_frame_r = Math.min(...Network.frame_they_are_missing)
+		buffer.remove_old(lowest_frame_r)
 	}
 
 	//TODO: Promise resolution

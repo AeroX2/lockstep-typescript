@@ -52,10 +52,10 @@ let loop = () => {
 	setTimeout(() => {
 
 		game.add_input()
-		Network.send_input_buffer(game.input_buffer)
+		Network.send_input_buffer(game.old_input_buffer)
 		
-		if (false) {
-			game.simulate([])
+		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
+			game.simulate(Network.buffers.map(b => b.popleft()))
 		}
 		game.draw();
 		
