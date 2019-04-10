@@ -112,10 +112,10 @@ export class Game {
 		} else if (frame === end) {
 			//Tally the score
 			for (let ball of this.balls) {
-				if (!ball.collided_with) continue;
+				if (!ball.collidedWith) continue;
 
-				let score = this.scores.get(ball.collided_with.id) + 1
-				this.scores.set(ball.collided_with.id, score)
+				let score = this.scores.get(ball.collidedWith.id) + 1
+				this.scores.set(ball.collidedWith.id, score)
 				if (score === this.max_scores[0]) {
 					this.max_scores.push()
 				} else if (score > this.max_scores[0]) {

@@ -1,13 +1,12 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
 import { Player, OtherPlayer } from './player';
-import { createContext } from 'vm';
 
 export class Ball extends Entity implements Movable,ElasticCollision,Collidable {
 	radius = 20;
 
 	//TODO: Keep a history of what balls the player has collided with?
 	//collided_with: {[id: string]: Player} = {}
-	collided_with: Player;
+	collidedWith: Player;
 
 	constructor(x: number, y: number) {
 		super();
@@ -18,10 +17,10 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 	draw(ctx: CanvasRenderingContext2D): void {
 		// let values = Object.values(this.collided_with)
 
-		ctx.fillStyle = this.collided_with ? this.collided_with.colour : 'blue'
+		ctx.fillStyle = this.collidedWith ? this.collidedWith.colour : 'blue'
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-		this.collided_with ? ctx.fill() : ctx.stroke();
+		this.collidedWith ? ctx.fill() : ctx.stroke();
 
 		// let division = 2*Math.PI/values.length;
 		// for (let i = 0; i < values.length; i++) {
@@ -34,7 +33,7 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 
 	collision_interaction(e2: Entity) {
 		if (e2 instanceof Player || e2 instanceof OtherPlayer) {
-			this.collided_with = e2
+			this.collidedWith = e2
 		}
 	}
 }
