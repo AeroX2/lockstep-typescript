@@ -1,10 +1,10 @@
 import { Entity } from './entity'
 import { Player, OtherPlayer } from './player'
 import { Ball } from './ball'
-import { InputPacket } from './unreliable_packets';
-import { Buffer } from './buffer';
-import { Network } from './network';
-import { Random } from '.';
+import { InputPacket } from '../network/unreliable_packets';
+import { Buffer } from '../network/buffer';
+import { Network } from '../network/network';
+import { Random } from '..';
 
 export class Game {
 	public static FPS = 1000 / 60;

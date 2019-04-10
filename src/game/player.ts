@@ -1,6 +1,6 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
-import { InputPacket } from './unreliable_packets';
-import { Random } from '.';
+import { InputPacket } from '../network/unreliable_packets';
+import { Random } from '..';
 
 let randomColor = require('randomcolor');
 

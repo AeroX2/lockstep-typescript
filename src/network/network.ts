@@ -1,6 +1,6 @@
 import { DataConnection } from 'peerjs';
 import { Buffer } from './buffer';
-import { Game } from './game';
+import { Game } from '../game/game';
 import { OtherClientsPacket, ReliablePacket } from './reliable_packets';
 import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets';
 

@@ -1,7 +1,7 @@
-import { Network } from './network';
-import { Game } from './game';
-import { UnreliablePacket } from './unreliable_packets';
-import { StartPacket, PlayerPacket, ReliablePacket } from './reliable_packets';
+import { Network } from './network/network';
+import { Game } from './game/game';
+import { UnreliablePacket } from './network/unreliable_packets';
+import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_packets';
 import * as seedrandom from 'seedrandom';
 
 export var Random: seedrandom.prng;
