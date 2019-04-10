@@ -1,15 +1,23 @@
+import { Game } from "./game";
+
 export class Entity {
+	id: number = -1;
 	x: number = 0;
 	y: number = 0;
 	vx: number = 0;
 	vy: number = 0;
 	radius: number;
 
+	constructor() {
+		this.id = Game.entity_id++;
+	}
+
 	update(canvas: HTMLCanvasElement): void {}
 	draw(ctx: CanvasRenderingContext2D): void {}
 
 	collides(e2: Entity): boolean { return false; }
 	collision(e2: Entity): void {}
+	collision_interaction(e2: Entity): void {}
 }
 
 export class Movable extends Entity {

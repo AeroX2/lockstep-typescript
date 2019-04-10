@@ -8,6 +8,7 @@ import { Network } from './network';
 export class Game {
 	//TODO: Make this not a static variable?
 	public static frame: number = 0;
+	public static entity_id: number = 0;
 
 	private running = false;
 	private entities: Entity[] = []

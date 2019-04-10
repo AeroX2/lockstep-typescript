@@ -22,6 +22,7 @@ export class PlayerPacket extends ReliablePacket {
     constructor(
         public x: number,
         public y: number,
+        public colour: string,
     ) {
         super();
     }

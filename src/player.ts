@@ -2,8 +2,9 @@ import { Entity, Movable, ElasticCollision, Collidable } from './entity';
 import { InputPacket } from './unreliable_packets';
 
 export class Player extends Entity implements Movable,ElasticCollision,Collidable {
-	radius = 20;
-	speed = 0.5;
+	public radius = 20;
+	public speed = 0.5;
+	public colour = 'blue';
 
 	constructor(x: number, y: number) {
 		super();
@@ -19,7 +20,7 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 	}
 
 	draw(ctx: CanvasRenderingContext2D): void {
-		ctx.fillStyle = 'green';
+		ctx.fillStyle = this.colour;
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
 		ctx.fill();
@@ -27,11 +28,9 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 }
 
 export class OtherPlayer extends Player {
-	draw(ctx: CanvasRenderingContext2D): void {
-		ctx.fillStyle = 'red';
-		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
-		ctx.fill();
+	constructor(x: number, y: number, colour: string) {
+		super(x,y);
+		this.colour = 'red';
 	}
 }
 

@@ -15,6 +15,10 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 		ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
 		ctx.fill();
 	}
+
+	collision_interaction(e2: Entity) {
+		
+	}
 }
 
 function applyMixins(derivedCtor: any, baseCtors: any[]) {
