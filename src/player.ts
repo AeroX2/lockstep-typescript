@@ -1,17 +1,21 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
 import { InputPacket } from './unreliable_packets';
+import { Random } from '.';
 
 let randomColor = require('randomcolor');
 
 export class Player extends Entity implements Movable,ElasticCollision,Collidable {
-	public radius = 20;
+	public static RADIUS = 20;
+
+	public radius = Player.RADIUS;
 	public speed = 0.5;
-	public colour = randomColor();
+	public colour: string;
 
 	constructor(x: number, y: number) {
 		super();
 		this.x = x;
 		this.y = y;
+		this.colour = randomColor({luminosity: 'dark', seed: Random.int32()})
 	}
 
 	input(i: InputPacket) {
@@ -30,9 +34,8 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 }
 
 export class OtherPlayer extends Player {
-	constructor(x: number, y: number, colour: string) {
+	constructor(x: number, y: number) {
 		super(x,y);
-		this.colour = colour;
 	}
 }
 

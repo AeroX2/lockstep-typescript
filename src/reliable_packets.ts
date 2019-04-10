@@ -13,17 +13,14 @@ export class ReliablePacket {
 
 export class StartPacket extends ReliablePacket {
     constructor(
+        public seed: string
     ) {
         super();
     }
 }
 
 export class PlayerPacket extends ReliablePacket {
-    constructor(
-        public x: number,
-        public y: number,
-        public colour: string,
-    ) {
+    constructor() {
         super();
     }
 }

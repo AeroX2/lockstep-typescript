@@ -4,54 +4,60 @@ import { Ball } from './ball'
 import { InputPacket } from './unreliable_packets';
 import { Buffer } from './buffer';
 import { Network } from './network';
+import { Random } from '.';
 
 export class Game {
 	public static FPS = 1000 / 60;
 	public static GAME_START_COUNTDOWN = 3000;
-	public static GAME_END_COUNTDOWN = 3000;
+	public static GAME_END_COUNTDOWN = 60000;
 	public static GAME_END_SCORE_COUNTDOWN = 2000;
 
 	//TODO: Make this not a static variable?
-	public static frame: number = 0;
-	public static entity_id: number = 0;
+	public static frame: number;
+	public static entity_id: number;
 
-	private running = false;
 	private entities: Entity[];
 	private canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	private ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
 
-	public current_input: InputPacket = new InputPacket(0, false, false, false, false);
-	private input_buffer: Buffer = new Buffer('');
-	public old_input_buffer: Buffer = new Buffer('');
+	public current_input: InputPacket;
+	private input_buffer: Buffer;
+	public old_input_buffer: Buffer;
 
 	private local_player: Player;
 	private other_players: OtherPlayer[];
 	private balls: Ball[];
 
-	private scores: {[id: string]: number};
+	private scores: Map<number, number>;
 	private max_scores: number[];
 
-	new_player(): Player {
-		let x = Math.round(Math.random() * this.canvas.width)
-		let y = Math.round(Math.random() * this.canvas.height / 2 + this.canvas.height / 2)
-		this.local_player = new Player(x, y)
-		return this.local_player;
-	}
+	setup(): void {
+		Game.frame = 0;
+		Game.entity_id = 0;
 
-	setup(other_players: OtherPlayer[]): void {
-		// if (this.running) {
-		// 	throw "Setup has been called twice something has gone horribly wrong"
-		// }
-		// this.running = true;
+		this.current_input = new InputPacket(0, false, false, false, false);
+		this.input_buffer = new Buffer('');
+		this.old_input_buffer = new Buffer('');
 
-		this.other_players = other_players;
+		this.other_players = [];
+		let sorted_mapping = (Array.from(Network.mapping.keys()).concat(Network.local_id)).sort()
+		for (let client of sorted_mapping) {
+			let random_range = (min: number, max: number) => {
+				return Math.floor(Random() * (max-min) + min) 
+			}
+			let x = random_range(Player.RADIUS, this.canvas.width-Player.RADIUS)
+			let y = random_range(this.canvas.height/2, this.canvas.width-Player.RADIUS)
+
+			if (client === Network.local_id) this.local_player = new Player(x, y);
+			else this.other_players[Network.mapping.get(client)] = new OtherPlayer(x, y);
+		}
 
 		this.entities = [];
 		this.entities.push(this.local_player)
-		this.entities = this.entities.concat(other_players)
+		this.entities = this.entities.concat(this.other_players)
 
-		this.scores = {};
-		for (let entity of this.entities) this.scores[entity.id] = 0;
+		this.scores = new Map();
+		for (let entity of this.entities) this.scores.set(entity.id, 0);
 		this.max_scores = [-1]
 
 		let sp = 2;
@@ -98,26 +104,31 @@ export class Game {
 
 		if (frame <= start) {
 			//Nothing interesting
-		} else if (frame <= end) {
+		} else if (frame < end) {
 			//Run the game
 			this.local_player.input(v);
 			for (let i = 0; i < other_inputs.length; i++) this.other_players[i].input(other_inputs[i])
 			this.update();
-		} else if (frame <= restart) {
+		} else if (frame === end) {
 			//Tally the score
 			for (let ball of this.balls) {
 				if (!ball.collided_with) continue;
-				
-				this.scores[ball.collided_with.id] += 1
-				let score = this.scores[ball.collided_with.id]
-				if (score == this.max_scores[0]) {
+
+				let score = this.scores.get(ball.collided_with.id) + 1
+				this.scores.set(ball.collided_with.id, score)
+				if (score === this.max_scores[0]) {
 					this.max_scores.push()
 				} else if (score > this.max_scores[0]) {
 					this.max_scores = [score]
 				}
 			}
+		} else if (frame <= restart) {
+			//Nothing interesting
 		} else {
 			//Restart the game
+			//TODO: Should actually reset the game instead of starting from scratch and relying on the garbage collector
+			Network.reset();
+			this.setup();
 		}
 
 		Game.frame++;
@@ -146,6 +157,9 @@ export class Game {
 
 		for (let entity of this.entities) entity.draw(this.ctx);
 
+		let hw = this.canvas.width / 2;
+		let hh = this.canvas.height / 2;
+
 		let frame = Game.frame * Game.FPS;
 		let start = Game.GAME_START_COUNTDOWN;
 		let end = start + Game.GAME_END_COUNTDOWN;
@@ -156,7 +170,7 @@ export class Game {
 			let seconds = (start - frame) / 1000.0
 			this.ctx.textAlign = 'center'
 			this.ctx.font = '32px Ubuntu'
-			this.ctx.fillText(`Game will start in ${seconds.toFixed(2)} seconds`, this.canvas.width / 2, this.canvas.height / 2)
+			this.ctx.fillText(`Game will start in ${seconds.toFixed(2)} seconds`, hw, hh)
 		} else if (frame <= end) {
 			let seconds = (end - frame) / 1000.0
 			this.ctx.textAlign = 'left'
@@ -166,15 +180,32 @@ export class Game {
 			this.ctx.textAlign = 'center'
 			this.ctx.font = '32px Ubuntu'
 			if (this.max_scores.length > 1) {
-				this.ctx.fillText('You Tied!', this.canvas.width / 2, this.canvas.height / 2)
-			} else if (this.scores[this.local_player.id] == this.max_scores[0]) {
-				this.ctx.fillText('You WON!', this.canvas.width / 2, this.canvas.height / 2)
+				this.ctx.fillText('You Tied!', hw, hh)
+			} else if (this.scores.get(this.local_player.id) == this.max_scores[0]) {
+				this.ctx.fillText('You WON!', hw, hh)
 			} else {
-				this.ctx.fillText('You Lost :\'(', this.canvas.width / 2, this.canvas.height / 2)
+				this.ctx.fillText('You Lost :\'(', hw, hh)
 			}
 
 			let seconds = (restart - frame) / 1000.0
-			this.ctx.fillText(`Game will restart in ${seconds.toFixed(2)} seconds`, this.canvas.width / 2, this.canvas.height / 2 + 40)
+			this.ctx.fillText(`Game will restart in ${seconds.toFixed(2)} seconds`, hw, hh + 40)
+
+			this.ctx.textAlign = 'left'
+			this.ctx.font = '16px Ubuntu'
+			for (let i = 0; i < this.scores.size; i++) {
+				let y = hh + 70 + 30 * i;
+				let key = Array.from(this.scores.keys())[i]
+				let score = this.scores.get(key);
+				let entity = this.entities.find(e => e.id === key) as Player
+
+				this.ctx.fillStyle = entity.colour;
+				this.ctx.beginPath();
+				this.ctx.arc(hw - 70, y, 10, 0, 2 * Math.PI);
+				this.ctx.stroke();
+				this.ctx.fill();
+
+				this.ctx.fillText(`- had a score of ${score}`, hw - 50, y + 5)
+			}
 		}
 	}
 

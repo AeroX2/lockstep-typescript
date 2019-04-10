@@ -1,8 +1,10 @@
 import { Network } from './network';
 import { Game } from './game';
-import { Player, OtherPlayer } from './player';
 import { UnreliablePacket } from './unreliable_packets';
 import { StartPacket, PlayerPacket, ReliablePacket } from './reliable_packets';
+import * as seedrandom from 'seedrandom';
+
+export var Random: seedrandom.prng;
 
 console.log('Starting up');
 Network.open_socket().then(id => {
@@ -13,22 +15,21 @@ Network.open_socket().then(id => {
 let game = new Game();
 
 //TODO: Probably a nicer way of doing this, instead of callbacks
-let other_players: OtherPlayer[] = []
+let other_players: number = 0;
 Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
 	console.log('Network callback')
 	if (data instanceof StartPacket) {
 		console.log('Received start command')
-		let player = game.new_player();
-		Network.send_all_reliable(new PlayerPacket(player.x, player.y, player.colour));
-	} else if (data instanceof PlayerPacket) {
-		console.log('Received player coords')
+		Random = seedrandom(data.seed)
 
-		//TODO: Check the player color and make it isn't transparent or hard to see :/
-		other_players.push(new OtherPlayer(data.x, data.y, data.colour))
+		//Acknowledge receiving the start packet
+		Network.send_all_reliable(new PlayerPacket())
+	} else if (data instanceof PlayerPacket) {
+		other_players += 1
 
 		// We have got everyones elses positions, now we can start the game
-		if (other_players.length >= Network.mapping.size) {
-			game.setup(other_players)
+		if (other_players >= Network.mapping.size) {
+			game.setup()
 			loop();
 		} 
 	}
@@ -46,10 +47,11 @@ connect_button.addEventListener('click', () => {
 let start_button = document.getElementById('start-button');
 start_button.addEventListener('click', () => {
 	console.log('Starting game')
-	Network.send_all_reliable(new StartPacket())
 
-	let player = game.new_player();
-	Network.send_all_reliable(new PlayerPacket(player.x, player.y, player.colour));
+	let starting_seed = Math.random().toString(36).substring(2)
+	Network.send_all_reliable(new StartPacket(starting_seed))
+	Network.send_all_reliable(new PlayerPacket())
+	Random = seedrandom(starting_seed)
 });
 
 let loop = () => {

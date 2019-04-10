@@ -16,6 +16,11 @@ export class Buffer {
     public length(): number {
         return this.buffer.length;
     }
+
+    public clear(): void {
+        this.buffer = [];
+        this.filled = false;
+    }
     
     public add(data: InputPacket) {
         //TODO: Replace this with a more efficient SortedSet

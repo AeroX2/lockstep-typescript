@@ -17,7 +17,7 @@ export class Network {
 	public static mapping: Map<string, number> = new Map()
 
 	private static index = 0;
-	private static local_id: string;
+	public static local_id: string;
 	public static buffers: Buffer[] = [];
 
 	private static reliable_connections: DataConnection[] = []
@@ -26,7 +26,13 @@ export class Network {
 	private static frame_we_are_missing: number[] = [];
 	private static frame_they_are_missing: number[] = [];
 
-	static open_socket(): Promise<string> {
+	public static reset(): void {
+		this.frame_they_are_missing = [];
+		this.frame_we_are_missing = [];
+		for (let buffer of this.buffers) buffer.clear();
+	}
+
+	public static open_socket(): Promise<string> {
 		return new Promise((resolve) => {
 			peer.on('open', (id: string) => {
 				console.log('My peer id is: ' + id)
