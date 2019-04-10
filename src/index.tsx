@@ -23,6 +23,7 @@ Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
 	} else if (data instanceof PlayerPacket) {
 		console.log('Received player coords')
 
+		//TODO: Check the player color and make it isn't transparent or hard to see :/
 		other_players.push(new OtherPlayer(data.x, data.y, data.colour))
 
 		// We have got everyones elses positions, now we can start the game
@@ -51,7 +52,6 @@ start_button.addEventListener('click', () => {
 	Network.send_all_reliable(new PlayerPacket(player.x, player.y, player.colour));
 });
 
-let fps = 1000/60
 let loop = () => {
 	setTimeout(() => {
 
@@ -64,5 +64,5 @@ let loop = () => {
 		game.draw();
 		
 		window.requestAnimationFrame(loop)
-	}, fps)
+	}, Game.FPS)
 }

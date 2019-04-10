@@ -1,10 +1,12 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity';
 import { InputPacket } from './unreliable_packets';
 
+let randomColor = require('randomcolor');
+
 export class Player extends Entity implements Movable,ElasticCollision,Collidable {
 	public radius = 20;
 	public speed = 0.5;
-	public colour = 'blue';
+	public colour = randomColor();
 
 	constructor(x: number, y: number) {
 		super();
@@ -30,7 +32,7 @@ export class Player extends Entity implements Movable,ElasticCollision,Collidabl
 export class OtherPlayer extends Player {
 	constructor(x: number, y: number, colour: string) {
 		super(x,y);
-		this.colour = 'red';
+		this.colour = colour;
 	}
 }
 

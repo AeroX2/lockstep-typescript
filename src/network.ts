@@ -97,25 +97,15 @@ export class Network {
 
 	private static open_reliable(peer_id: string): Promise<void> {
 		return new Promise(async resolve => {
-			for (let retry = 0; retry < Network.RETRY_AMOUNT; retry++) {
-				let conn = peer.connect(peer_id, { reliable: true });
-				conn.on('open', () => {
-					Network.reliable_connections.push(conn)
-					conn.on('data', (data: ReliablePacket) => { Network.receive_reliable(conn.peer, data) })
-				});
-
-				// Wait a little bit for a connection to open
-				await Network.wait(1000);
-
-				if (Network.reliable_connections[Network.index] !== undefined) {
-					resolve()
-					return;
-				}
-
-				// Keep retrying until we get a connection
-				await Network.wait(3000);
-			}
-			throw new Error('Unable to make reliable connection')
+			let conn = peer.connect(peer_id, { reliable: true });
+			conn.on('open', () => {
+				Network.reliable_connections.push(conn)
+				conn.on('data', (data: ReliablePacket) => { Network.receive_reliable(conn.peer, data) })
+				resolve();
+			});
+			conn.on('error', (error: string) => {
+				throw new Error(`Unable to make reliable connection: ${error}`);
+			});
 		});
 	}
 
@@ -129,25 +119,15 @@ export class Network {
 
 	private static open_unreliable(peer_id: string): Promise<void> {
 		return new Promise(async resolve => {
-			for (let retry = 0; retry < Network.RETRY_AMOUNT; retry++) {
-				let conn = peer.connect(peer_id, { reliable: false });
-				conn.on('open', () => {
-					Network.unreliable_connections.push(conn)
-					conn.on('data', (data: UnreliablePacket) => { Network.receive_unreliable(conn.peer, data) })
-				});
-
-				// Wait a little bit for a connection to open
-				await Network.wait(1000);
-
-				if (Network.unreliable_connections[Network.index] !== undefined) {
-					resolve()
-					return;
-				}
-
-				// Keep retrying until we get a connection
-				await Network.wait(3000);
-			}
-			throw new Error('Unable to make unreliable connection')
+			let conn = peer.connect(peer_id);
+			conn.on('open', () => {
+				Network.unreliable_connections.push(conn)
+				conn.on('data', (data: UnreliablePacket) => { Network.receive_unreliable(conn.peer, data) })
+				resolve();
+			});
+			conn.on('error', (error: string) => {
+				throw new Error(`Unable to make unreliable connection: ${error}`);
+			});
 		});
 	}
 
