@@ -25,9 +25,13 @@ export class Network {
 	private static frame_they_are_missing: number[] = []
 
 	public static reset(): void {
-		this.frame_they_are_missing = []
 		this.frame_we_are_missing = []
-		for (let buffer of this.buffers) buffer.clear()
+		this.frame_they_are_missing = []
+		for (let buffer of this.buffers) {
+			buffer.clear()
+			this.frame_we_are_missing.push(0);
+			this.frame_they_are_missing.push(0);
+		}
 	}
 
 	public static open_socket(): Promise<string> {
@@ -41,11 +45,14 @@ export class Network {
 		})
 	}
 
-	private static connection_made(peer_id: string): void {
-		Network.mapping.set(peer_id, Network.index)
-		Network.buffers.push(new Buffer())
-		Network.frame_we_are_missing.push(0)
-		Network.index++
+	private static connection_setup(peer_id: string): Promise<void> {
+		return new Promise(resolve => {
+			Network.mapping.set(peer_id, Network.index++)
+			Network.buffers.push(new Buffer())
+			Network.frame_we_are_missing.push(0)
+			Network.frame_they_are_missing.push(0);
+			resolve();
+		})
 	}
 
 	private static connection_opened(conn: DataConnection): void {
@@ -53,8 +60,7 @@ export class Network {
 		let index = Network.mapping.get(conn.peer)
 		if (index === undefined) {
 			index = Network.index
-
-			Network.connection_made(conn.peer)
+			Network.connection_setup(conn.peer)
 
 			// Javascript is weird (let a = []; a[2] = 4; a == [empty,empty,4])
 			// Network.reliable_connections.push(null)
@@ -96,11 +102,15 @@ export class Network {
 			return
 		}
 
-		Network.open_reliable(peer_id)
+		Network.connection_setup(peer_id)
+			.then(() => Network.open_reliable(peer_id))
 			.then(() => Network.open_unreliable(peer_id))
-			.then(() => Network.connection_made(peer_id))
 			.then(() => console.log(`Connection made with ${peer_id}`))
-			.catch(() => console.log(`Unable to make connection made with ${peer_id}`))
+			.catch(() => {
+				console.log(`Unable to make connection made with ${peer_id}`)
+				Network.mapping.delete(peer_id)
+				Network.index--;
+			})
 	}
 
 	private static open_reliable(peer_id: string): Promise<void> {
@@ -116,14 +126,6 @@ export class Network {
 			conn.on('error', (error: string) => {
 				throw new Error(`Unable to make reliable connection: ${error}`)
 			})
-		})
-	}
-
-	private static wait(v: number): Promise<void> {
-		return new Promise(resolve => {
-			setTimeout(() => {
-				resolve()
-			}, v)
 		})
 	}
 
@@ -156,6 +158,7 @@ export class Network {
 	private static receive_unreliable(peer_id: string, data: UnreliablePacket): void {
 		data = UnreliablePacket.convert(data)
 		if (data instanceof InputPacket) {
+			if (data.game < Game.game) return
 			if (data.frame < Game.frame) return
 
 			let index = Network.mapping.get(peer_id)
@@ -196,6 +199,7 @@ export class Network {
 			conn.send(new AckPacket(lowest_frame).raw())
 		}
 
+		// console.log(Network.frame_they_are_missing.toString())
 		let lowest_frame_r = Math.min(...Network.frame_they_are_missing)
 		buffer.remove_old(lowest_frame_r)
 	}

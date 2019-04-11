@@ -18,6 +18,7 @@ export class UnreliablePacket {
 export class InputPacket extends UnreliablePacket {
 	public constructor(
 		public frame: number,
+		public game: number,
 		public up: boolean,
 		public down: boolean,
 		public left: boolean,

@@ -13,7 +13,8 @@ export class Game {
 	public static GAME_END_SCORE_COUNTDOWN = 2000
 
 	//TODO: Make this not a static variable?
-	public static frame: number
+	public static game: number = 0;
+	public static frame: number;
 	public static entity_id: number
 
 	private entities: Entity[]
@@ -33,10 +34,11 @@ export class Game {
 	private max_scores: number[]
 
 	public setup(): void {
+		Game.game += 1;
 		Game.frame = 0
 		Game.entity_id = 0
 
-		this.current_input = new InputPacket(0, false, false, false, false)
+		this.current_input = new InputPacket(0, Game.game, false, false, false, false)
 		this.input_buffer = new Buffer()
 		this.old_input_buffer = new Buffer()
 
@@ -49,7 +51,7 @@ export class Game {
 				return Math.floor(Random() * (max - min) + min)
 			}
 			let x = random_range(Player.RADIUS, this.canvas.width - Player.RADIUS)
-			let y = random_range(this.canvas.height / 2, this.canvas.width - Player.RADIUS)
+			let y = random_range(this.canvas.height / 2, this.canvas.height - Player.RADIUS)
 
 			if (client === Network.local_id) this.local_player = new Player(x, y)
 			else this.other_players[Network.mapping.get(client)] = new OtherPlayer(x, y)
@@ -99,14 +101,14 @@ export class Game {
 	}
 
 	public simulate(other_inputs: InputPacket[]): void {
+		// console.log("Simulating frame: ", Game.frame)
+
 		let v = this.input_buffer.popleft()
 
 		let frame = Game.frame * Game.FPS
 		let start = Game.GAME_START_COUNTDOWN
 		let end = start + Game.GAME_END_COUNTDOWN
 		let restart = end + Game.GAME_END_SCORE_COUNTDOWN
-
-		if (frame === end) debugger;
 
 		if (frame <= start) {
 			//Nothing interesting
@@ -133,7 +135,6 @@ export class Game {
 			}
 		} else {
 			//Restart the game
-			//TODO: Should actually reset the game instead of starting from scratch and relying on the garbage collector
 			Network.reset()
 			this.setup()
 		}
@@ -217,11 +218,15 @@ export class Game {
 
 	public add_input(): void {
 		if (this.input_buffer.length() < Network.BUFFER_SIZE) {
+			console.log('Adding frame:', this.current_input.raw())
 			let input_copy = Object.create(this.current_input)
 			input_copy = Object.assign(input_copy, this.current_input)
-
 			this.input_buffer.add(input_copy)
-			this.old_input_buffer.add(input_copy)
+
+			let input_copy2 = Object.create(this.current_input)
+			input_copy2 = Object.assign(input_copy, this.current_input)
+			this.old_input_buffer.add(input_copy2)
+
 			this.current_input.frame++
 		}
 	}

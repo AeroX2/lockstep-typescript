@@ -30,7 +30,6 @@ let loop = (): void => {
 //TODO: Probably a nicer way of doing this, instead of callbacks
 let other_players = 0
 Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
-	console.log('Network callback')
 	if (data instanceof StartPacket) {
 		console.log('Received start command')
 		Random = seedrandom(data.seed)
@@ -38,8 +37,9 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 		//Acknowledge receiving the start packet
 		Network.send_all_reliable(new PlayerPacket())
 	} else if (data instanceof PlayerPacket) {
-		other_players += 1
+		console.log('Received PlayerPacket acknowledgement command')
 
+		other_players += 1
 		// We have got everyones elses positions, now we can start the game
 		if (other_players >= Network.mapping.size) {
 			game.setup()

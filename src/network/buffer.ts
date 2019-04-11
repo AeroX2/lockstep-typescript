@@ -41,7 +41,13 @@ export class Buffer {
 	}
 
 	public remove_old(frame: number): void {
-		this.buffer.splice(0, this.buffer.findIndex(v => v.frame === frame))
+		let index = this.buffer.findIndex(v => v.frame === frame)
+		if (index === -1) return; // We haven't generated this frame yet
+
+		// console.log(`Found frame:`, frame)
+		// console.log(`Removing ${index} packets`)
+		// console.log(this.buffer.map(v => v.frame).join())
+		this.buffer.splice(0, index)
 	}
 
 	public popleft(): InputPacket {
