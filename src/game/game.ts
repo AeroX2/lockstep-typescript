@@ -7,9 +7,9 @@ import { Network } from '../network/network'
 import { Random } from '..'
 
 export class Game {
-	public static FPS = 1000 / 60
+	public static FPS = Math.floor(1000 / 60)
 	public static GAME_START_COUNTDOWN = 3000
-	public static GAME_END_COUNTDOWN = 60000
+	public static GAME_END_COUNTDOWN = 10000
 	public static GAME_END_SCORE_COUNTDOWN = 2000
 
 	//TODO: Make this not a static variable?
@@ -28,6 +28,7 @@ export class Game {
 	private other_players: OtherPlayer[]
 	private balls: Ball[]
 
+	private score_tallied: boolean;
 	private scores: Map<number, number>
 	private max_scores: number[]
 
@@ -58,6 +59,7 @@ export class Game {
 		this.entities.push(this.local_player)
 		this.entities = this.entities.concat(this.other_players)
 
+		this.score_tallied = false;
 		this.scores = new Map()
 		for (let entity of this.entities) this.scores.set(entity.id, 0)
 		this.max_scores = [-1]
@@ -104,6 +106,8 @@ export class Game {
 		let end = start + Game.GAME_END_COUNTDOWN
 		let restart = end + Game.GAME_END_SCORE_COUNTDOWN
 
+		if (frame === end) debugger;
+
 		if (frame <= start) {
 			//Nothing interesting
 		} else if (frame < end) {
@@ -111,21 +115,22 @@ export class Game {
 			this.local_player.input(v)
 			for (let i = 0; i < other_inputs.length; i++) this.other_players[i].input(other_inputs[i])
 			this.update()
-		} else if (frame === end) {
+		} else if (frame <= restart) {
 			//Tally the score
-			for (let ball of this.balls) {
-				if (!ball.collidedWith) continue
+			if (!this.score_tallied) {
+				this.score_tallied = true;
+				for (let ball of this.balls) {
+					if (!ball.collidedWith) continue
 
-				let score = this.scores.get(ball.collidedWith.id) + 1
-				this.scores.set(ball.collidedWith.id, score)
-				if (score === this.max_scores[0]) {
-					this.max_scores.push()
-				} else if (score > this.max_scores[0]) {
-					this.max_scores = [score]
+					let score = this.scores.get(ball.collidedWith.id) + 1
+					this.scores.set(ball.collidedWith.id, score)
+					if (score === this.max_scores[0]) {
+						this.max_scores.push()
+					} else if (score > this.max_scores[0]) {
+						this.max_scores = [score]
+					}
 				}
 			}
-		} else if (frame <= restart) {
-			//Nothing interesting
 		} else {
 			//Restart the game
 			//TODO: Should actually reset the game instead of starting from scratch and relying on the garbage collector
