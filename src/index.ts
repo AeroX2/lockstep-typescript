@@ -1,6 +1,5 @@
 import { Network } from './network/network';
 import { Game } from './game/game';
-import { UnreliablePacket } from './network/unreliable_packets';
 import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_packets';
 import * as seedrandom from 'seedrandom';
 
@@ -14,9 +13,24 @@ Network.open_socket().then(id => {
 
 let game = new Game();
 
+let loop = (): void => {
+	setTimeout(() => {
+
+		game.add_input()
+		Network.send_input_buffer(game.old_input_buffer)
+		
+		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
+			game.simulate(Network.buffers.map(b => b.popleft()))
+		}
+		game.draw();
+		
+		window.requestAnimationFrame(loop)
+	}, Game.FPS)
+}
+
 //TODO: Probably a nicer way of doing this, instead of callbacks
-let other_players: number = 0;
-Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
+let other_players = 0;
+Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 	console.log('Network callback')
 	if (data instanceof StartPacket) {
 		console.log('Received start command')
@@ -35,17 +49,14 @@ Network.reliable_callbacks.push((peer_id: string, data: ReliablePacket) => {
 	}
 })
 
-Network.unreliable_callbacks.push((peer_id: string, data: UnreliablePacket) => {
-})
-
 let connect_button = document.getElementById('connect-button');
-connect_button.addEventListener('click', () => {
+connect_button.addEventListener('click', (): void => {
 	let textbox = document.getElementById('textbox') as HTMLInputElement;
 	Network.full_connect(textbox.value.trim());
 });
 
 let start_button = document.getElementById('start-button');
-start_button.addEventListener('click', () => {
+start_button.addEventListener('click', (): void => {
 	console.log('Starting game')
 
 	let starting_seed = Math.random().toString(36).substring(2)
@@ -53,18 +64,3 @@ start_button.addEventListener('click', () => {
 	Network.send_all_reliable(new PlayerPacket())
 	Random = seedrandom(starting_seed)
 });
-
-let loop = () => {
-	setTimeout(() => {
-
-		game.add_input()
-		Network.send_input_buffer(game.old_input_buffer)
-		
-		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
-			game.simulate(Network.buffers.map(b => b.popleft()))
-		}
-		game.draw();
-		
-		window.requestAnimationFrame(loop)
-	}, Game.FPS)
-}

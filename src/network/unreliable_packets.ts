@@ -1,18 +1,20 @@
 import * as namespace from './unreliable_packets';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-parameter-properties */
 export class UnreliablePacket {
     public type: string;
 
     public raw(): any { return Object.assign({ type: this.constructor.name }, this) }
 
     public static convert(data: UnreliablePacket): any { 
-        let object = Object.create((<any>namespace)[data.type].prototype)
+        let object = Object.create((namespace as any)[data.type].prototype)
         return Object.assign(object, data)
     }
 }
 
 export class InputPacket extends UnreliablePacket {
-    constructor(
+    public constructor(
         public frame: number,
         public up: boolean,
         public down: boolean,
@@ -24,7 +26,7 @@ export class InputPacket extends UnreliablePacket {
 }
 
 export class AckPacket extends UnreliablePacket {
-    constructor(
+    public constructor(
         public ack: number,
     ) {
         super();

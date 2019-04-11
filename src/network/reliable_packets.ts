@@ -1,18 +1,20 @@
 import * as namespace from './reliable_packets';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-parameter-properties */
 export class ReliablePacket {
     public type: string;
 
     public raw(): any { return Object.assign({ type: this.constructor.name }, this) }
 
     public static convert(data: ReliablePacket): any { 
-        let object = Object.create((<any>namespace)[data.type].prototype)
+        let object = Object.create((namespace as any)[data.type].prototype)
         return Object.assign(object, data)
     }
 }
 
 export class StartPacket extends ReliablePacket {
-    constructor(
+    public constructor(
         public seed: string
     ) {
         super();
@@ -20,13 +22,13 @@ export class StartPacket extends ReliablePacket {
 }
 
 export class PlayerPacket extends ReliablePacket {
-    constructor() {
+    public constructor() {
         super();
     }
 }
 
 export class OtherClientsPacket extends ReliablePacket {
-    constructor(
+    public constructor(
         public others: string[]
     ) {
         super();

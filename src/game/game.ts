@@ -31,18 +31,18 @@ export class Game {
 	private scores: Map<number, number>;
 	private max_scores: number[];
 
-	setup(): void {
+	public setup(): void {
 		Game.frame = 0;
 		Game.entity_id = 0;
 
 		this.current_input = new InputPacket(0, false, false, false, false);
-		this.input_buffer = new Buffer('');
-		this.old_input_buffer = new Buffer('');
+		this.input_buffer = new Buffer();
+		this.old_input_buffer = new Buffer();
 
 		this.other_players = [];
 		let sorted_mapping = (Array.from(Network.mapping.keys()).concat(Network.local_id)).sort()
 		for (let client of sorted_mapping) {
-			let random_range = (min: number, max: number) => {
+			let random_range = (min: number, max: number): number => {
 				return Math.floor(Random() * (max-min) + min) 
 			}
 			let x = random_range(Player.RADIUS, this.canvas.width-Player.RADIUS)
@@ -94,7 +94,7 @@ export class Game {
 		}
 	}
 
-	simulate(other_inputs: InputPacket[]): void {
+	public simulate(other_inputs: InputPacket[]): void {
 		let v = this.input_buffer.popleft();
 
 		let frame = Game.frame * Game.FPS;
@@ -134,7 +134,7 @@ export class Game {
 		Game.frame++;
 	}
 
-	update(): void {
+	public update(): void {
 		for (let entity of this.entities) entity.update(this.canvas);
 
 		for (let entity of this.entities) {
@@ -152,7 +152,7 @@ export class Game {
 		}
 	}
 
-	draw(): void {
+	public draw(): void {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
 		for (let entity of this.entities) entity.draw(this.ctx);
@@ -209,7 +209,7 @@ export class Game {
 		}
 	}
 
-	add_input(): void {
+	public add_input(): void {
 		if (this.input_buffer.length() < Network.BUFFER_SIZE) {
 			let input_copy = Object.create(this.current_input)
 			input_copy = Object.assign(input_copy, this.current_input)

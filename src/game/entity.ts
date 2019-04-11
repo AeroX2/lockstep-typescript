@@ -1,27 +1,29 @@
 import { Game } from "./game";
 
 export class Entity {
-	id: number = -1;
-	x: number = 0;
-	y: number = 0;
-	vx: number = 0;
-	vy: number = 0;
-	radius: number;
+	public id: number = -1;
+	public x: number = 0;
+	public y: number = 0;
+	public vx: number = 0;
+	public vy: number = 0;
+	public radius: number;
 
-	constructor() {
+	public constructor() {
 		this.id = Game.entity_id++;
 	}
 
-	update(canvas: HTMLCanvasElement): void {}
-	draw(ctx: CanvasRenderingContext2D): void {}
+	/* eslint-disable @typescript-eslint/no-unused-vars */
+	public update(canvas: HTMLCanvasElement): void {}
+	public draw(ctx: CanvasRenderingContext2D): void {}
 
-	collides(e2: Entity): boolean { return false; }
-	collision(e2: Entity): void {}
-	collision_interaction(e2: Entity): void {}
+	public collides(e2: Entity): boolean { return false; }
+	public collision(e2: Entity): void {}
+	public collision_interaction(e2: Entity): void {}
+	/* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 export class Movable extends Entity {
-	update(canvas: HTMLCanvasElement): void {
+	public update(canvas: HTMLCanvasElement): void {
 		this.x += this.vx;
 		this.y += this.vy;
 
@@ -49,7 +51,7 @@ export class Movable extends Entity {
 
 //TODO: This should be eventually replaced with Shapes
 export class Collidable extends Entity {
-	collides(e2: Entity) {
+	public collides(e2: Entity): boolean {
 		let dx = this.x-e2.x;
 		let dy = this.y-e2.y;
 		return Math.sqrt(dx*dx+dy*dy) < this.radius+e2.radius
@@ -57,7 +59,7 @@ export class Collidable extends Entity {
 }
 
 export class ElasticCollision extends Entity {
-	collision(e2: Entity) {
+	public collision(e2: Entity): void {
 		let dx = e2.x-this.x;
 		let dy = e2.y-this.y;
 		let distance = Math.sqrt(dx*dx+dy*dy);

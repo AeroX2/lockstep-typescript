@@ -7,5 +7,6 @@ module.exports = {
     rules: {
         '@typescript-eslint/indent': 'off',
         '@typescript-eslint/camelcase': 'off',
+        '@typescript-eslint/explicit-function-return-type': ["error", { allowExpressions: true }],
     }
 }

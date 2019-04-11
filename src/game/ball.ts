@@ -2,19 +2,19 @@ import { Entity, Movable, ElasticCollision, Collidable } from './entity';
 import { Player, OtherPlayer } from './player';
 
 export class Ball extends Entity implements Movable,ElasticCollision,Collidable {
-	radius = 20;
+	public radius = 20;
 
 	//TODO: Keep a history of what balls the player has collided with?
 	//collided_with: {[id: string]: Player} = {}
-	collidedWith: Player;
+	public collidedWith: Player;
 
-	constructor(x: number, y: number) {
+	public constructor(x: number, y: number) {
 		super();
 		this.x = x;
 		this.y = y;
 	}
 
-	draw(ctx: CanvasRenderingContext2D): void {
+	public draw(ctx: CanvasRenderingContext2D): void {
 		// let values = Object.values(this.collided_with)
 
 		ctx.fillStyle = this.collidedWith ? this.collidedWith.colour : 'blue'
@@ -31,14 +31,15 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 		// }
 	}
 
-	collision_interaction(e2: Entity) {
+	public collision_interaction(e2: Entity): void {
 		if (e2 instanceof Player || e2 instanceof OtherPlayer) {
 			this.collidedWith = e2
 		}
 	}
 }
 
-function applyMixins(derivedCtor: any, baseCtors: any[]) {
+// eslint-disable-next-line
+function applyMixins(derivedCtor: any, baseCtors: any[]): void {
     baseCtors.forEach(baseCtor => {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
             Object.defineProperty(derivedCtor.prototype, name, Object.getOwnPropertyDescriptor(baseCtor.prototype, name));

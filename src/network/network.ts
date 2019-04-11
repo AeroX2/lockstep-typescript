@@ -4,10 +4,8 @@ import { Game } from '../game/game';
 import { OtherClientsPacket, ReliablePacket } from './reliable_packets';
 import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets';
 
-//TODO: Surely there is another way to resolve this
-const Peer = require('peerjs');
-let peer = new Peer.default();
-
+import PeerJs from 'peerjs'
+let peer = new PeerJs(null);
 export class Network {
 	public static BUFFER_SIZE = 8;
 	public static RETRY_AMOUNT = 5;
@@ -43,14 +41,14 @@ export class Network {
 		});
 	}
 
-	private static connection_made(peer_id: string) {
+	private static connection_made(peer_id: string): void {
 		Network.mapping.set(peer_id, Network.index);
-		Network.buffers.push(new Buffer(peer_id))
+		Network.buffers.push(new Buffer())
 		Network.frame_we_are_missing.push(0);
 		Network.index++;
 	}
 
-	private static connection_opened(conn: DataConnection) {
+	private static connection_opened(conn: DataConnection): void {
 		console.log(`${conn.reliable ? 'Reliable' : 'Unreliable'} Connection opened with ${conn.peer}`)
 		let index = Network.mapping.get(conn.peer)
 		if (index === undefined) {
@@ -83,7 +81,7 @@ export class Network {
 		}
 	}
 
-	static full_connect(peer_id: string): void {
+	public static full_connect(peer_id: string): void {
 		console.log(`Making a connection with ${peer_id}`)
 		if (Network.local_id === peer_id) {
 			console.log('Trying to make a connection with ourself');
@@ -137,7 +135,7 @@ export class Network {
 		});
 	}
 
-	private static receive_reliable(peer_id: string, data: ReliablePacket) {
+	private static receive_reliable(peer_id: string, data: ReliablePacket): void {
 		console.log('Received reliable: ', data)
 		data = ReliablePacket.convert(data)
 
@@ -147,7 +145,7 @@ export class Network {
 		for (let callback of Network.reliable_callbacks) callback(peer_id, data);
 	}
 
-	private static receive_unreliable(peer_id: string, data: UnreliablePacket) {
+	private static receive_unreliable(peer_id: string, data: UnreliablePacket): void {
 		data = UnreliablePacket.convert(data)
 		if (data instanceof InputPacket) {
 			if (data.frame < Game.frame) return;
@@ -164,12 +162,12 @@ export class Network {
 		for (let callback of Network.unreliable_callbacks) callback(peer_id, data);
 	}
 
-	static send_all_reliable(data: ReliablePacket) {
+	public static send_all_reliable(data: ReliablePacket): void {
 		let raw_data = data.raw();
 		for (let conn of Network.reliable_connections) conn.send(raw_data);
 	}
 
-	static send_input_buffer(buffer: Buffer) {
+	public static send_input_buffer(buffer: Buffer): void {
 		let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
 		let sliderValue = parseInt(slider.value) / 100.0;
 		document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
@@ -192,9 +190,5 @@ export class Network {
 
 		let lowest_frame_r = Math.min(...Network.frame_they_are_missing)
 		buffer.remove_old(lowest_frame_r)
-	}
-
-	//TODO: Promise resolution
-	static wait_for_buffers(): any {
 	}
 }

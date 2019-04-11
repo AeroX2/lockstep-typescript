@@ -5,9 +5,7 @@ export class Buffer {
     private buffer: InputPacket[] = []
     public filled = false;
 
-	constructor(
-		public peer_id: string
-    ) { }
+	public constructor() { }
 
     public items(): InputPacket[] {
         return this.buffer;
@@ -22,7 +20,7 @@ export class Buffer {
         this.filled = false;
     }
     
-    public add(data: InputPacket) {
+    public add(data: InputPacket): void {
         //TODO: Replace this with a more efficient SortedSet
         if (!this.buffer.map(v => v.frame).includes(data.frame)) this.buffer.push(data)
         this.buffer = this.buffer.sort((a,b) => a.frame - b.frame)
@@ -42,19 +40,19 @@ export class Buffer {
         return this.buffer[this.buffer.length-1].frame
     }
 
-    public remove_old(frame: number) {
+    public remove_old(frame: number): void {
         this.buffer.splice(0, this.buffer.findIndex(v => v.frame === frame))
     }
 
-    public popleft() {
+    public popleft(): InputPacket {
         return this.buffer.shift();
     }
 
-    public popright() {
+    public popright(): InputPacket {
         return this.buffer.pop();
     }
 
-    public peek() {
+    public peek(): InputPacket {
         return this.buffer[0];
     }
 }
