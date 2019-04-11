@@ -1,26 +1,26 @@
-import { Entity, Movable, ElasticCollision, Collidable } from './entity';
-import { Player, OtherPlayer } from './player';
+import { Entity, Movable, ElasticCollision, Collidable } from './entity'
+import { Player, OtherPlayer } from './player'
 
-export class Ball extends Entity implements Movable,ElasticCollision,Collidable {
-	public radius = 20;
+export class Ball extends Entity implements Movable, ElasticCollision, Collidable {
+	public radius = 20
 
 	//TODO: Keep a history of what balls the player has collided with?
 	//collided_with: {[id: string]: Player} = {}
-	public collidedWith: Player;
+	public collidedWith: Player
 
 	public constructor(x: number, y: number) {
-		super();
-		this.x = x;
-		this.y = y;
+		super()
+		this.x = x
+		this.y = y
 	}
 
 	public draw(ctx: CanvasRenderingContext2D): void {
 		// let values = Object.values(this.collided_with)
 
 		ctx.fillStyle = this.collidedWith ? this.collidedWith.colour : 'blue'
-		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-		this.collidedWith ? ctx.fill() : ctx.stroke();
+		ctx.beginPath()
+		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+		this.collidedWith ? ctx.fill() : ctx.stroke()
 
 		// let division = 2*Math.PI/values.length;
 		// for (let i = 0; i < values.length; i++) {
@@ -40,10 +40,14 @@ export class Ball extends Entity implements Movable,ElasticCollision,Collidable 
 
 // eslint-disable-next-line
 function applyMixins(derivedCtor: any, baseCtors: any[]): void {
-    baseCtors.forEach(baseCtor => {
-        Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
-            Object.defineProperty(derivedCtor.prototype, name, Object.getOwnPropertyDescriptor(baseCtor.prototype, name));
-        });
-    });
+	baseCtors.forEach(baseCtor => {
+		Object.getOwnPropertyNames(baseCtor.prototype).forEach(name => {
+			Object.defineProperty(
+				derivedCtor.prototype,
+				name,
+				Object.getOwnPropertyDescriptor(baseCtor.prototype, name)
+			)
+		})
+	})
 }
-applyMixins(Ball, [Movable,ElasticCollision,Collidable])
+applyMixins(Ball, [Movable, ElasticCollision, Collidable])
