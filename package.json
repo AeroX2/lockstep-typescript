@@ -5,10 +5,10 @@
   "main": "index.ts",
   "sideEffects": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "webpack --watch",
-    "start": "webpack-dev-server --open --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js",
+    "watch": "webpack --config webpack.prod.js --watch",
+    "test": "webpack --config webpack.testing.js",
+    "start": "webpack-dev-server --open --config webpack.dev.js",
     "lint": "eslint ./**/*.ts"
   },
   "keywords": [],

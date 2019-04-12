@@ -178,10 +178,7 @@ export class Network {
 		for (let conn of Network.reliable_connections) conn.send(raw_data)
 	}
 
-	public static send_input_buffer(buffer: Buffer): void {
-		let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
-		let sliderValue = parseInt(slider.value) / 100.0
-		document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
+	public static send_input_buffer(buffer: Buffer, packet_loss: number = 0): void {
 
 		let data = buffer.items().map(v => v.raw())
 		for (let index = 0; index < Network.unreliable_connections.length; index++) {
@@ -190,12 +187,12 @@ export class Network {
 			let lowest_ack = Network.frame_they_are_missing[index]
 			for (let input of data) {
 				if (input.frame >= lowest_ack) {
-					if (Math.random() >= sliderValue) conn.send(input)
+					if (Math.random() >= packet_loss) conn.send(input)
 					else console.log('Simulating a lost packet')
 				}
 			}
 
-			let lowest_frame = Network.frame_we_are_missing[index]
+			let lowest_frame = Network.frame_we_are_missing[index] || 0
 			conn.send(new AckPacket(lowest_frame).raw())
 		}
 

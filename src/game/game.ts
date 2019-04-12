@@ -4,7 +4,7 @@ import { Ball } from './ball'
 import { InputPacket } from '../network/unreliable_packets'
 import { Buffer } from '../network/buffer'
 import { Network } from '../network/network'
-import { Random } from '..'
+import { Random } from '../utils';
 
 export class Game {
 	public static FPS = Math.floor(1000 / 60)
@@ -18,11 +18,11 @@ export class Game {
 	public static entity_id: number
 
 	private entities: Entity[]
-	private canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
-	private ctx: CanvasRenderingContext2D = this.canvas.getContext('2d')
+	protected canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
+	private ctx: CanvasRenderingContext2D = this.canvas ? this.canvas.getContext('2d') : null
 
-	public current_input: InputPacket
-	private input_buffer: Buffer
+	protected current_input: InputPacket
+	protected input_buffer: Buffer
 	public old_input_buffer: Buffer
 
 	private local_player: Player
@@ -33,8 +33,10 @@ export class Game {
 	private scores: Map<number, number>
 	private max_scores: number[]
 
-	public setup(): void {
-		Game.game += 1;
+	public setup(startup=true): void {
+		if (startup) Game.game = 0;
+		else Game.game += 1;
+
 		Game.frame = 0
 		Game.entity_id = 0
 
@@ -224,7 +226,7 @@ export class Game {
 			this.input_buffer.add(input_copy)
 
 			let input_copy2 = Object.create(this.current_input)
-			input_copy2 = Object.assign(input_copy, this.current_input)
+			input_copy2 = Object.assign(input_copy2, this.current_input)
 			this.old_input_buffer.add(input_copy2)
 
 			this.current_input.frame++

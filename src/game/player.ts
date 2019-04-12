@@ -1,6 +1,6 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity'
 import { InputPacket } from '../network/unreliable_packets'
-import { Random } from '..'
+import { Random } from '../utils'
 import randomColor from 'randomcolor'
 
 export class Player extends Entity implements Movable, ElasticCollision, Collidable {

@@ -1,9 +1,8 @@
 import { Network } from './network/network'
 import { Game } from './game/game'
 import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_packets'
+import { Utils } from './utils'
 import * as seedrandom from 'seedrandom'
-
-export var Random: seedrandom.prng
 
 console.log('Starting up')
 Network.open_socket().then(id => {
@@ -16,7 +15,11 @@ let game = new Game()
 let loop = (): void => {
 	setTimeout(() => {
 		game.add_input()
-		Network.send_input_buffer(game.old_input_buffer)
+
+		let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
+		let sliderValue = parseInt(slider.value) / 100.0
+		document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
+		Network.send_input_buffer(game.old_input_buffer, sliderValue)
 
 		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 			game.simulate(Network.buffers.map(b => b.popleft()))
@@ -32,7 +35,7 @@ let other_players = 0
 Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 	if (data instanceof StartPacket) {
 		console.log('Received start command')
-		Random = seedrandom(data.seed)
+		Utils.set_random(seedrandom(data.seed))
 
 		//Acknowledge receiving the start packet
 		Network.send_all_reliable(new PlayerPacket())
@@ -42,7 +45,7 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 		other_players += 1
 		// We have got everyones elses positions, now we can start the game
 		if (other_players >= Network.mapping.size) {
-			game.setup()
+			game.setup(false)
 			loop()
 		}
 	}
@@ -68,6 +71,6 @@ start_button.addEventListener(
 			.substring(2)
 		Network.send_all_reliable(new StartPacket(starting_seed))
 		Network.send_all_reliable(new PlayerPacket())
-		Random = seedrandom(starting_seed)
+		Utils.set_random(seedrandom(starting_seed))
 	}
 )
