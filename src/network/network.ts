@@ -175,7 +175,10 @@ export class Network {
 
 	public static send_all_reliable(data: ReliablePacket): void {
 		let raw_data = data.raw()
-		for (let conn of Network.reliable_connections) conn.send(raw_data)
+		for (let conn of Network.reliable_connections) {
+			//TODO: Find out why the connection is not stabilizing here
+			if (conn) conn.send(raw_data)
+		} 
 	}
 
 	public static send_input_buffer(buffer: Buffer, packet_loss: number = 0): void {

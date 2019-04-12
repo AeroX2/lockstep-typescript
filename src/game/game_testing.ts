@@ -30,19 +30,4 @@ export class GameTesting extends Game {
 	}
 
 	public draw(): void {}
-
-	public add_input(): void {
-		if (this.input_buffer.length() < Network.BUFFER_SIZE) {
-			console.log('Adding frame:', this.current_input.raw())
-			let input_copy = Object.create(this.current_input)
-			input_copy = Object.assign(input_copy, this.current_input)
-			this.input_buffer.add(input_copy)
-
-			let input_copy2 = Object.create(this.current_input)
-			input_copy2 = Object.assign(input_copy2, this.current_input)
-			this.old_input_buffer.add(input_copy2)
-
-			this.current_input.frame++
-		}
-	}
 }

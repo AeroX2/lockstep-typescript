@@ -33,10 +33,8 @@ export class Game {
 	private scores: Map<number, number>
 	private max_scores: number[]
 
-	public setup(startup=true): void {
-		if (startup) Game.game = 0;
-		else Game.game += 1;
-
+	public setup(): void {
+		Game.game += 1;
 		Game.frame = 0
 		Game.entity_id = 0
 
@@ -48,10 +46,12 @@ export class Game {
 		let sorted_mapping = Array.from(Network.mapping.keys())
 			.concat(Network.local_id)
 			.sort()
+
+		let random_range = (min: number, max: number): number => {
+			return Math.floor(Random() * (max - min) + min)
+		}
 		for (let client of sorted_mapping) {
-			let random_range = (min: number, max: number): number => {
-				return Math.floor(Random() * (max - min) + min)
-			}
+			console.log('Making player for', client)
 			let x = random_range(Player.RADIUS, this.canvas.width - Player.RADIUS)
 			let y = random_range(this.canvas.height / 2, this.canvas.height - Player.RADIUS)
 
@@ -220,7 +220,7 @@ export class Game {
 
 	public add_input(): void {
 		if (this.input_buffer.length() < Network.BUFFER_SIZE) {
-			console.log('Adding frame:', this.current_input.raw())
+			// console.log('Adding frame:', this.current_input.raw())
 			let input_copy = Object.create(this.current_input)
 			input_copy = Object.assign(input_copy, this.current_input)
 			this.input_buffer.add(input_copy)
