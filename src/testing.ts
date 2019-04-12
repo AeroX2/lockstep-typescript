@@ -3,6 +3,7 @@ import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_pa
 import * as seedrandom from 'seedrandom'
 import { GameTesting } from './game/game_testing';
 import { Utils } from './utils';
+import { Game } from './game/game';
 
 export var Random: seedrandom.prng
 
@@ -23,12 +24,12 @@ let loop = (): void => {
 		game.add_input()
 		Network.send_input_buffer(game.old_input_buffer)
 
-		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === GameTesting.frame)) {
+		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 			game.simulate(Network.buffers.map(b => b.popleft()))
 		}
 
 		window.requestAnimationFrame(loop)
-	}, GameTesting.FPS)
+	}, Game.FPS)
 }
 
 let other_players = 0

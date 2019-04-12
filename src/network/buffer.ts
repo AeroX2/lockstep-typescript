@@ -37,7 +37,7 @@ export class Buffer {
 				return game_frame + i
 			}
 		}
-		return this.buffer[this.buffer.length - 1].frame
+		return this.buffer[this.buffer.length - 1].frame+1
 	}
 
 	public remove_old(frame: number): void {

@@ -68,7 +68,7 @@ export class Network {
 		}
 
 		if (conn.reliable) {
-			Network.reliable_connections[index] = conn
+			Network.reliable_connections.push(conn);
 			conn.on('open', () => {
 				conn.on('data', (data: ReliablePacket) => {
 					Network.receive_reliable(conn.peer, data)
@@ -81,7 +81,7 @@ export class Network {
 				}
 			})
 		} else {
-			Network.unreliable_connections[index] = conn
+			Network.unreliable_connections.push(conn)
 			conn.on('open', () => {
 				conn.on('data', (data: UnreliablePacket) => {
 					Network.receive_unreliable(conn.peer, data)
@@ -166,8 +166,11 @@ export class Network {
 			buffer.add(data)
 			Network.frame_we_are_missing[index] = buffer.find_lowest(Game.frame)
 		} else if (data instanceof AckPacket) {
+			//TODO: We should come up with a better system of removing old packets
+			//FIXME
 			let index = Network.mapping.get(peer_id)
-			Network.frame_they_are_missing[index] = data.ack
+			let v = Network.frame_they_are_missing[index]
+			if (v === data.ack) Network.frame_they_are_missing[index] += 1
 		}
 
 		for (let callback of Network.unreliable_callbacks) callback(peer_id, data)
@@ -199,7 +202,7 @@ export class Network {
 			conn.send(new AckPacket(lowest_frame).raw())
 		}
 
-		// console.log(Network.frame_they_are_missing.toString())
+		// console.log(Network.frame_they_are_missing.join())
 		let lowest_frame_r = Math.min(...Network.frame_they_are_missing)
 		buffer.remove_old(lowest_frame_r)
 	}
