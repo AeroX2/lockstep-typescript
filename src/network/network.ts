@@ -166,11 +166,12 @@ export class Network {
 			buffer.add(data)
 			Network.frame_we_are_missing[index] = buffer.find_lowest(Game.frame)
 		} else if (data instanceof AckPacket) {
-			//TODO: We should come up with a better system of removing old packets
-			//FIXME
+			// Reject packets that are too far outside the current range
+			if (data.ack < Game.frame - Network.BUFFER_SIZE) return
+			if (data.ack > Game.frame + Network.BUFFER_SIZE) return
+
 			let index = Network.mapping.get(peer_id)
-			let v = Network.frame_they_are_missing[index]
-			if (v === data.ack) Network.frame_they_are_missing[index] += 1
+			Network.frame_they_are_missing[index] = Math.max(Network.frame_they_are_missing[index], data.ack)
 		}
 
 		for (let callback of Network.unreliable_callbacks) callback(peer_id, data)
