@@ -229,5 +229,15 @@ export class Network {
 				buffer.items().splice(buffer.items().map(v => v.raw()).indexOf(frame), 1)
 			}
 		}
+
+		// Prune old results
+		for (let array of Network.acknowledged_frames) {
+			for (let i = 0; i < array.length; i++) {
+				let frame = array[i];
+				if (frame < Game.frame - Network.BUFFER_SIZE) {
+					array.splice(i, 1)	
+				}
+			}
+		}
 	}
 }

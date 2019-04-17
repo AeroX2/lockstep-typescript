@@ -33,12 +33,12 @@ launch();
 setTimeout(() => {
   launch();
 }, 1000)
-setTimeout(() => {
-  launch();
-}, 2000)
-setTimeout(() => {
-  launch();
-}, 3000)
+// setTimeout(() => {
+//   launch();
+// }, 2000)
+// setTimeout(() => {
+//   launch();
+// }, 3000)
 // launch();
 // launch();
 // launch();
