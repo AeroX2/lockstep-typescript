@@ -226,7 +226,8 @@ export class Network {
 				for (let array of Network.acknowledged_frames) {
 					array.splice(array.indexOf(frame), 1);
 				}
-				buffer.items().splice(buffer.items().map(v => v.raw()).indexOf(frame), 1)
+				let index = buffer.items().map(v => v.frame).indexOf(frame)
+				if (index !== -1) buffer.items().splice(index, 1)
 			}
 		}
 
