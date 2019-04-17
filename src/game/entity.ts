@@ -29,24 +29,24 @@ export class Movable extends Entity {
 		this.x += this.vx
 		this.y += this.vy
 
-		this.vx *= 0.995
-		this.vy *= 0.995
+		// this.vx *= 0.995
+		// this.vy *= 0.995
 
 		if (this.x < this.radius) {
 			this.x = this.radius
-			this.vx = -this.vx * 0.9
+			this.vx = -this.vx;// * 0.9
 		}
 		if (this.x > canvas.width - this.radius) {
 			this.x = canvas.width - this.radius
-			this.vx = -this.vx * 0.9
+			this.vx = -this.vx;// * 0.9
 		}
 		if (this.y < this.radius) {
 			this.y = this.radius
-			this.vy = -this.vy * 0.9
+			this.vy = -this.vy;// * 0.9
 		}
 		if (this.y > canvas.height - this.radius) {
 			this.y = canvas.height - this.radius
-			this.vy = -this.vy * 0.9
+			this.vy = -this.vy;// * 0.9
 		}
 	}
 }
@@ -88,5 +88,10 @@ export class ElasticCollision extends Entity {
 			e2.vx += dvx
 			e2.vy += dvy
 		}
+
+		this.x = Math.round(this.x * 10) / 10
+		this.y = Math.round(this.y * 10) / 10
+		this.vx = Math.round(this.vx * 10) / 10
+		this.vy = Math.round(this.vy * 10) / 10
 	}
 }

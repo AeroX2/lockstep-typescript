@@ -1,8 +1,8 @@
 import { Network } from './network/network'
 import { Game } from './game/game'
-import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_packets'
+import { StartPacket, PlayerPacket, ReliablePacket, ChecksumPacket } from './network/reliable_packets'
 import { Utils } from './utils'
-import * as seedrandom from 'seedrandom'
+import objectHash from 'object-hash';
 
 console.log('Starting up')
 Network.open_socket().then(id => {
@@ -11,6 +11,7 @@ Network.open_socket().then(id => {
 })
 
 let game = new Game()
+let checksums: { [id: number]: string } = []
 
 let loop = (): void => {
 	setTimeout(() => {
@@ -23,6 +24,15 @@ let loop = (): void => {
 
 		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 			game.simulate(Network.buffers.map(b => b.popleft()))
+
+			// Network.send_checksum(game.entities)
+
+			// let hash = '';
+			// for (let entity of game.entities.slice(4)) {
+			// 	hash += objectHash(entity)
+			// 	hash = objectHash(hash)
+			// }
+			// checksums[Game.frame-1] = hash;
 		}
 		game.draw()
 
@@ -50,6 +60,12 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 			game.setup()
 			loop()
 		}
+	} else if (data instanceof ChecksumPacket) {
+		// if (!checksums[data.frame]) return;
+		// if (data.checksum !== checksums[data.frame]) {
+		// 	console.error("Checksum ERROR!")
+		// 	debugger;
+		// }
 	}
 })
 

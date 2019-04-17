@@ -32,3 +32,11 @@ export class OtherClientsPacket extends ReliablePacket {
 		super()
 	}
 }
+
+export class ChecksumPacket extends ReliablePacket {
+	public constructor(
+		public frame: number,
+		public checksum: string) {
+		super()
+	}
+}

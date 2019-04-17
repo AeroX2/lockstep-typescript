@@ -1,10 +1,12 @@
 import { DataConnection } from 'peerjs'
 import { Buffer } from './buffer'
 import { Game } from '../game/game'
-import { OtherClientsPacket, ReliablePacket } from './reliable_packets'
+import { OtherClientsPacket, ReliablePacket, ChecksumPacket } from './reliable_packets'
 import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets'
 
 import PeerJs from 'peerjs'
+import { Entity } from '../game/entity';
+import objectHash from 'object-hash';
 let peer = new PeerJs(null)
 export class Network {
 	public static BUFFER_SIZE = 8
@@ -240,5 +242,17 @@ export class Network {
 				}
 			}
 		}
+	}
+
+	public static send_checksum(entities: Entity[]): void {
+		// let hash = '';
+		// for (let entity of entities.slice(4)) {
+		// 	hash += objectHash(entity)
+		// 	hash = objectHash(hash)
+		// }
+		// for (let index = 0; index < Network.reliable_connections.length; index++) {
+		// 	let conn = Network.reliable_connections[index]
+		// 	conn.send(new ChecksumPacket(Game.frame-1, hash).raw());
+		// }
 	}
 }

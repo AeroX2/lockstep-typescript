@@ -17,7 +17,7 @@ export class Game {
 	public static frame: number;
 	public static entity_id: number
 
-	private entities: Entity[]
+	public entities: Entity[]
 	protected canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	private ctx: CanvasRenderingContext2D = this.canvas ? this.canvas.getContext('2d') : null
 
@@ -147,13 +147,18 @@ export class Game {
 	}
 
 	public update(): void {
-		for (let entity of this.entities) entity.update(this.canvas)
+		for (let i = 0; i < this.entities.length; i++) {
+			let entity = this.entities[i]
+			entity.update(this.canvas)
+		} 
 
-		for (let entity of this.entities) {
+		for (let i = 0; i < this.entities.length; i++) {
+			let entity = this.entities[i]
 			// Ignore players for the moment
 			if (entity instanceof Player) continue
 
-			for (let other_entity of this.entities) {
+			for (let ii = 0; ii < this.entities.length; ii++) {
+				let other_entity = this.entities[ii];
 				if (entity === other_entity) continue
 				if (entity.collides(other_entity)) {
 					entity.collision(other_entity)
