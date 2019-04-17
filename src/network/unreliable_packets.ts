@@ -29,7 +29,9 @@ export class InputPacket extends UnreliablePacket {
 }
 
 export class AckPacket extends UnreliablePacket {
-	public constructor(public ack: number) {
+	public constructor(
+		public received_frames: number[]
+	) {
 		super()
 	}
 }

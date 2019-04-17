@@ -10,6 +10,8 @@ export class Network {
 	public static BUFFER_SIZE = 8
 	public static RETRY_AMOUNT = 5
 
+	public static ignore_packets: boolean = false;
+
 	public static reliable_callbacks: Function[] = []
 	public static unreliable_callbacks: Function[] = []
 	public static mapping: Map<string, number> = new Map()
@@ -21,16 +23,16 @@ export class Network {
 	private static reliable_connections: DataConnection[] = []
 	private static unreliable_connections: DataConnection[] = []
 
-	private static frame_we_are_missing: number[] = []
-	private static frame_they_are_missing: number[] = []
+	private static received_frames: number[][] = [];
+	private static acknowledged_frames: number[][] = [];
 
 	public static reset(): void {
-		this.frame_we_are_missing = []
-		this.frame_they_are_missing = []
-		for (let buffer of this.buffers) {
+		Network.received_frames = []
+		Network.acknowledged_frames = []
+		for (let buffer of Network.buffers) {
 			buffer.clear()
-			this.frame_we_are_missing.push(0);
-			this.frame_they_are_missing.push(0);
+			Network.received_frames.push([])
+			Network.acknowledged_frames.push([])
 		}
 	}
 
@@ -49,8 +51,8 @@ export class Network {
 		return new Promise(resolve => {
 			Network.mapping.set(peer_id, Network.index++)
 			Network.buffers.push(new Buffer())
-			Network.frame_we_are_missing.push(0)
-			Network.frame_they_are_missing.push(0);
+			Network.received_frames.push([])
+			Network.acknowledged_frames.push([])
 			resolve();
 		})
 	}
@@ -109,6 +111,8 @@ export class Network {
 			.catch(() => {
 				console.log(`Unable to make connection made with ${peer_id}`)
 				Network.mapping.delete(peer_id)
+				if (Network.reliable_connections.length === Network.index) Network.reliable_connections.pop();
+				if (Network.unreliable_connections.length === Network.index) Network.unreliable_connections.pop();
 				Network.index--;
 			})
 	}
@@ -156,6 +160,8 @@ export class Network {
 	}
 
 	private static receive_unreliable(peer_id: string, data: UnreliablePacket): void {
+		if (Network.ignore_packets) return;
+
 		data = UnreliablePacket.convert(data)
 		if (data instanceof InputPacket) {
 			if (data.game < Game.game) return
@@ -164,14 +170,16 @@ export class Network {
 			let index = Network.mapping.get(peer_id)
 			let buffer = Network.buffers[index]
 			buffer.add(data)
-			Network.frame_we_are_missing[index] = buffer.find_lowest(Game.frame)
-		} else if (data instanceof AckPacket) {
-			// Reject packets that are too far outside the current range
-			if (data.ack < Game.frame - Network.BUFFER_SIZE) return
-			if (data.ack > Game.frame + Network.BUFFER_SIZE) return
 
+			let recv = Network.received_frames[index]
+			if (!recv.includes(data.frame)) recv.push(data.frame)	
+		} else if (data instanceof AckPacket) {
 			let index = Network.mapping.get(peer_id)
-			Network.frame_they_are_missing[index] = Math.max(Network.frame_they_are_missing[index], data.ack)
+			for (let frame of data.received_frames) {
+				if (frame < Game.frame - Network.BUFFER_SIZE ||
+					frame > Game.frame + Network.BUFFER_SIZE) continue;
+				if (!Network.acknowledged_frames[index].includes(frame)) Network.acknowledged_frames[index].push(frame)
+			}
 		}
 
 		for (let callback of Network.unreliable_callbacks) callback(peer_id, data)
@@ -191,20 +199,35 @@ export class Network {
 		for (let index = 0; index < Network.unreliable_connections.length; index++) {
 			let conn = Network.unreliable_connections[index]
 
-			let lowest_ack = Network.frame_they_are_missing[index]
+
 			for (let input of data) {
-				if (input.frame >= lowest_ack) {
+				if (!Network.acknowledged_frames.includes(input)) {
 					if (Math.random() >= packet_loss) conn.send(input)
 					else console.log('Simulating a lost packet')
 				}
 			}
 
-			let lowest_frame = Network.frame_we_are_missing[index] || 0
-			conn.send(new AckPacket(lowest_frame).raw())
+			conn.send(new AckPacket(Network.received_frames[index]).raw())
+			Network.received_frames[index] = [];
 		}
+		
+		console.log(Network.acknowledged_frames.map(v => v.length).join(' '))
 
-		// console.log(Network.frame_they_are_missing.join())
-		let lowest_frame_r = Math.min(...Network.frame_they_are_missing)
-		buffer.remove_old(lowest_frame_r)
+		// Prune the acknowledged frames
+		for (let frame of Network.acknowledged_frames[0]) {
+			let ignore = false;
+			for (let array of Network.acknowledged_frames) {
+				if (!array.includes(frame)) {
+					ignore = true;
+					break;
+				}
+			}
+			if (!ignore) {
+				for (let array of Network.acknowledged_frames) {
+					array.splice(array.indexOf(frame), 1);
+				}
+				buffer.items().splice(buffer.items().map(v => v.raw()).indexOf(frame), 1)
+			}
+		}
 	}
 }

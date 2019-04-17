@@ -137,8 +137,10 @@ export class Game {
 			}
 		} else {
 			//Restart the game
+			Network.ignore_packets = true;
 			Network.reset()
 			this.setup()
+			Network.ignore_packets = false;
 		}
 
 		Game.frame++

@@ -11,7 +11,7 @@ let launch = (async () => {
 
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
-  await page.goto('http://localhost:8080/testing.html');
+  await page.goto('http://localhost:8080');
   await page.type('#textbox', process.argv[2].trim());
   await page.click('#connect-button');
   await page.on("pageerror", function(err) {  
@@ -30,6 +30,15 @@ let launch = (async () => {
 });
 
 launch();
-launch();
+setTimeout(() => {
+  launch();
+}, 1000)
+setTimeout(() => {
+  launch();
+}, 2000)
+setTimeout(() => {
+  launch();
+}, 3000)
+// launch();
 // launch();
 // launch();
