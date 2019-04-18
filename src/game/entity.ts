@@ -35,19 +35,19 @@ export class Movable extends Entity {
 
 		if (this.x.lessThan(this.radius)) {
 			this.x = new Decimal(this.radius)
-			this.vx = this.vx.neg();// * 0.9
+			this.vx = this.vx.neg()//.mul(0.9)
 		}
 		if (this.x.greaterThan(canvas.width - this.radius)) {
 			this.x = new Decimal(canvas.width - this.radius)
-			this.vx = this.vx.neg();// * 0.9
+			this.vx = this.vx.neg()//.mul(0.9)
 		}
 		if (this.y.lessThan(this.radius)) {
 			this.y = new Decimal(this.radius)
-			this.vy = this.vy.neg();// * 0.9
+			this.vy = this.vy.neg()//.mul(0.9)
 		}
 		if (this.y.greaterThan(canvas.height - this.radius)) {
 			this.y = new Decimal(canvas.height - this.radius)
-			this.vy = this.vy.neg();// * 0.9
+			this.vy = this.vy.neg()//.mul(0.9)
 		}
 	}
 }

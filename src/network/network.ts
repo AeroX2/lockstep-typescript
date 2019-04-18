@@ -180,8 +180,6 @@ export class Network {
 
 			let index = Network.mapping.get(peer_id)
 			for (let frame of data.received_frames) {
-				if (frame < Game.frame - Network.BUFFER_SIZE ||
-					frame > Game.frame + Network.BUFFER_SIZE) continue;
 				if (!Network.acknowledged_frames[index].includes(frame)) Network.acknowledged_frames[index].push(frame)
 			}
 		}
@@ -215,7 +213,7 @@ export class Network {
 			Network.received_frames[index] = [];
 		}
 		
-		console.log(Network.acknowledged_frames.map(v => v.length).join(' '))
+		// console.log(Network.acknowledged_frames.map(v => v.length).join(' '))
 
 		// Prune the acknowledged frames
 		for (let frame of Network.acknowledged_frames[0]) {

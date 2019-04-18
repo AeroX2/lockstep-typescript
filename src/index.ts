@@ -25,14 +25,14 @@ let loop = (): void => {
 		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 			game.simulate(Network.buffers.map(b => b.popleft()))
 
-			Network.send_checksum(game.entities)
+			// Network.send_checksum(game.entities)
 
-			let hash = '';
-			for (let entity of game.entities.slice(4)) {
-				hash += objectHash({x: entity.x.toNumber(), y: entity.y.toNumber()})
-				hash = objectHash(hash)
-			}
-			checksums[Game.frame-1] = hash;
+			// let hash = '';
+			// for (let entity of game.entities.slice(4)) {
+			// 	hash += objectHash({x: entity.x.toNumber(), y: entity.y.toNumber()})
+			// 	hash = objectHash(hash)
+			// }
+			// checksums[Game.frame-1] = hash;
 		}
 		game.draw()
 

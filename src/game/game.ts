@@ -22,7 +22,7 @@ export class Game {
 	protected canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	private ctx: CanvasRenderingContext2D = this.canvas ? this.canvas.getContext('2d') : null
 
-	protected current_input: InputPacket = new InputPacket(0, Game.game, false, false, false, false)
+	protected current_input: InputPacket;
 	protected input_buffer: Buffer
 	public old_input_buffer: Buffer
 
@@ -39,9 +39,7 @@ export class Game {
 		Game.frame = 0
 		Game.entity_id = 0
 
-		this.current_input.frame = 0;
-		this.current_input.game += 1; 
-
+		this.current_input = new InputPacket(0, Game.game, false, false, false, false)
 		this.input_buffer = new Buffer()
 		this.old_input_buffer = new Buffer()
 
@@ -143,10 +141,12 @@ export class Game {
 			Network.ignore_packets = true;
 			Network.reset()
 			this.setup()
-			Network.ignore_packets = false;
+			Game.frame--;
 		}
 
+		Network.ignore_packets = true;
 		Game.frame++
+		Network.ignore_packets = false;
 	}
 
 	public update(): void {
