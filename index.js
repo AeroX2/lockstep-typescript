@@ -11,6 +11,7 @@ let launch = (async () => {
 
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
+  await page.setViewport({width: 10000, height: 10000})
   await page.goto('http://localhost:8080');
   await page.type('#textbox', process.argv[2].trim());
   await page.click('#connect-button');
