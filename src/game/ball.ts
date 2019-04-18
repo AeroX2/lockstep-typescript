@@ -1,7 +1,10 @@
 import { Entity, Movable, ElasticCollision, Collidable } from './entity'
 import { Player, OtherPlayer } from './player'
+import Decimal from 'decimal.js';
 
 export class Ball extends Entity implements Movable, ElasticCollision, Collidable {
+	public nx: number;
+	public ny: number;
 	public radius = 20
 
 	//TODO: Keep a history of what balls the player has collided with?
@@ -10,8 +13,10 @@ export class Ball extends Entity implements Movable, ElasticCollision, Collidabl
 
 	public constructor(x: number, y: number) {
 		super()
-		this.x = x
-		this.y = y
+		this.nx = x;
+		this.ny = y;
+		this.x = new Decimal(x)
+		this.y = new Decimal(y)
 	}
 
 	public draw(ctx: CanvasRenderingContext2D): void {
@@ -19,7 +24,7 @@ export class Ball extends Entity implements Movable, ElasticCollision, Collidabl
 
 		ctx.fillStyle = this.collidedWith ? this.collidedWith.colour : 'blue'
 		ctx.beginPath()
-		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
+		ctx.arc(this.x.toNumber(), this.y.toNumber(), this.radius, 0, 2 * Math.PI)
 		this.collidedWith ? ctx.fill() : ctx.stroke()
 
 		// let division = 2*Math.PI/values.length;

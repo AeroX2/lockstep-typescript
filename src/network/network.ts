@@ -176,6 +176,8 @@ export class Network {
 			let recv = Network.received_frames[index]
 			if (!recv.includes(data.frame)) recv.push(data.frame)	
 		} else if (data instanceof AckPacket) {
+			if (data.game < Game.game) return
+
 			let index = Network.mapping.get(peer_id)
 			for (let frame of data.received_frames) {
 				if (frame < Game.frame - Network.BUFFER_SIZE ||
@@ -209,7 +211,7 @@ export class Network {
 				}
 			}
 
-			conn.send(new AckPacket(Network.received_frames[index]).raw())
+			conn.send(new AckPacket(Game.game, Network.received_frames[index]).raw())
 			Network.received_frames[index] = [];
 		}
 		
@@ -245,14 +247,14 @@ export class Network {
 	}
 
 	public static send_checksum(entities: Entity[]): void {
-		// let hash = '';
-		// for (let entity of entities.slice(4)) {
-		// 	hash += objectHash(entity)
-		// 	hash = objectHash(hash)
-		// }
-		// for (let index = 0; index < Network.reliable_connections.length; index++) {
-		// 	let conn = Network.reliable_connections[index]
-		// 	conn.send(new ChecksumPacket(Game.frame-1, hash).raw());
-		// }
+		let hash = '';
+		for (let entity of entities.slice(4)) {
+			hash += objectHash({x: entity.x.toNumber(), y: entity.y.toNumber()})
+			hash = objectHash(hash)
+		}
+		for (let index = 0; index < Network.reliable_connections.length; index++) {
+			let conn = Network.reliable_connections[index]
+			conn.send(new ChecksumPacket(Game.frame-1, hash).raw());
+		}
 	}
 }

@@ -5,6 +5,7 @@ import { InputPacket } from '../network/unreliable_packets'
 import { Buffer } from '../network/buffer'
 import { Network } from '../network/network'
 import { Random } from '../utils';
+import { Decimal } from 'decimal.js';
 
 export class Game {
 	public static FPS = Math.floor(1000 / 60)
@@ -21,7 +22,7 @@ export class Game {
 	protected canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
 	private ctx: CanvasRenderingContext2D = this.canvas ? this.canvas.getContext('2d') : null
 
-	protected current_input: InputPacket
+	protected current_input: InputPacket = new InputPacket(0, Game.game, false, false, false, false)
 	protected input_buffer: Buffer
 	public old_input_buffer: Buffer
 
@@ -38,7 +39,9 @@ export class Game {
 		Game.frame = 0
 		Game.entity_id = 0
 
-		this.current_input = new InputPacket(0, Game.game, false, false, false, false)
+		this.current_input.frame = 0;
+		this.current_input.game += 1; 
+
 		this.input_buffer = new Buffer()
 		this.old_input_buffer = new Buffer()
 
@@ -48,7 +51,7 @@ export class Game {
 			.sort()
 
 		let random_range = (min: number, max: number): number => {
-			return Math.floor(Random() * (max - min) + min)
+			return new Decimal(Random()).mul((max - min)).add(min).floor().toNumber();
 		}
 		for (let client of sorted_mapping) {
 			console.log('Making player for', client)
@@ -72,17 +75,17 @@ export class Game {
 		let br = 20
 		let balls = [new Ball(400, 250)]
 
-		balls.push(new Ball(balls[0].x - br - sp, balls[0].y - br * 2))
-		balls.push(new Ball(balls[0].x + br + sp, balls[0].y - br * 2))
+		balls.push(new Ball(balls[0].nx - br - sp, balls[0].ny - br * 2))
+		balls.push(new Ball(balls[0].nx + br + sp, balls[0].ny - br * 2))
 
-		balls.push(new Ball(balls[0].x - br * 2 - sp, balls[0].y - br * 4))
-		balls.push(new Ball(balls[0].x, balls[0].y - br * 4))
-		balls.push(new Ball(balls[0].x + br * 2 + sp, balls[0].y - br * 4))
+		balls.push(new Ball(balls[0].nx - br * 2 - sp, balls[0].ny - br * 4))
+		balls.push(new Ball(balls[0].nx,               balls[0].ny - br * 4))
+		balls.push(new Ball(balls[0].nx + br * 2 + sp, balls[0].ny - br * 4))
 
-		balls.push(new Ball(balls[0].x - br - sp, balls[0].y - br * 6))
-		balls.push(new Ball(balls[0].x - br * 3 - sp * 2, balls[0].y - br * 6))
-		balls.push(new Ball(balls[0].x + br + sp, balls[0].y - br * 6))
-		balls.push(new Ball(balls[0].x + br * 3 + sp * 2, balls[0].y - br * 6))
+		balls.push(new Ball(balls[0].nx - br - sp,         balls[0].ny - br * 6))
+		balls.push(new Ball(balls[0].nx - br * 3 - sp * 2, balls[0].ny - br * 6))
+		balls.push(new Ball(balls[0].nx + br + sp,         balls[0].ny - br * 6))
+		balls.push(new Ball(balls[0].nx + br * 3 + sp * 2, balls[0].ny - br * 6))
 
 		this.balls = balls
 		this.entities = this.entities.concat(balls)
