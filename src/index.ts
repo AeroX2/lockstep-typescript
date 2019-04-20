@@ -3,6 +3,7 @@ import { Game } from './game/game'
 import { StartPacket, PlayerPacket, ReliablePacket, ChecksumPacket } from './network/reliable_packets'
 import { Utils } from './utils'
 import objectHash from 'object-hash';
+import { Lobby } from './network/lobby';
 
 console.log('Starting up')
 Network.open_socket().then(id => {
@@ -11,9 +12,22 @@ Network.open_socket().then(id => {
 })
 
 let game = new Game()
+let game_started = false;
 let checksums: { [id: number]: string } = []
 
-let loop = (): void => {
+let menu_loop = (): void => {
+	Lobby.get_lobbies(Network.local_id).then((v) => {
+		let lobbies_list = document.getElementById('lobbies')
+		lobbies_list.innerText = `Lobbies\n${v.lobbies.join('\n')}`
+	})
+	setTimeout(() => {
+		if (!game_started) menu_loop();
+	}, 3000)
+}
+menu_loop();
+
+let game_loop = (): void => {
+	game_started = true;
 	setTimeout(() => {
 		game.add_input()
 
@@ -36,7 +50,7 @@ let loop = (): void => {
 		}
 		game.draw()
 
-		window.requestAnimationFrame(loop)
+		window.requestAnimationFrame(game_loop)
 	}, Game.FPS)
 }
 
@@ -58,7 +72,7 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 		if (other_players >= Network.mapping.size && setup_not_run) {
 			setup_not_run = false;
 			game.setup()
-			loop()
+			game_loop()
 		}
 	} else if (data instanceof ChecksumPacket) {
 		if (!checksums[data.frame]) return;
@@ -90,5 +104,31 @@ start_button.addEventListener(
 		Network.send_all_reliable(new StartPacket(starting_seed))
 		Network.send_all_reliable(new PlayerPacket())
 		Utils.set_random_seed(starting_seed)
+	}
+)
+
+
+let lobby_textbox = document.getElementById('lobby-name') as HTMLInputElement
+
+let create_lobby_button = document.getElementById('create-lobby-button')
+create_lobby_button.addEventListener(
+	'click',
+	(): void => {
+		Lobby.create_lobby(Network.local_id, lobby_textbox.value)
+			.catch((r) => {
+				console.log(r);
+			})
+	}
+)
+
+let connect_lobby_button = document.getElementById('connect-lobby-button')
+connect_lobby_button.addEventListener(
+	'click',
+	(): void => {
+		Lobby.connect_lobby(lobby_textbox.value).then((v) => {
+			Network.full_connect(v.lobby)
+		}).catch((r) => {
+			console.log(r);
+		})
 	}
 )

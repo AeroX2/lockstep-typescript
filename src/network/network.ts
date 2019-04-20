@@ -7,7 +7,11 @@ import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets'
 import PeerJs from 'peerjs'
 import { Entity } from '../game/entity';
 import objectHash from 'object-hash';
-let peer = new PeerJs(null)
+let peer = new PeerJs(null, {
+	host: 'localhost',
+	path: '/peerjs',
+	port: 3000,
+});
 export class Network {
 	public static BUFFER_SIZE = 8
 	public static RETRY_AMOUNT = 5

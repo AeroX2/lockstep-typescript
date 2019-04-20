@@ -17,7 +17,9 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^1.6.0",
     "@typescript-eslint/parser": "^1.6.0",
+    "cors": "^2.8.5",
     "eslint": "^5.16.0",
+    "peer": "^0.2.10",
     "terser-webpack-plugin": "^1.2.3",
     "ts-loader": "^5.3.3",
     "typescript": "^3.4.1",
