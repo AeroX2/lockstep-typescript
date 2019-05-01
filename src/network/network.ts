@@ -3,14 +3,15 @@ import { Buffer } from './buffer'
 import { Game } from '../game/game'
 import { OtherClientsPacket, ReliablePacket, ChecksumPacket } from './reliable_packets'
 import { UnreliablePacket, AckPacket, InputPacket } from './unreliable_packets'
-
 import PeerJs from 'peerjs'
 import { Entity } from '../game/entity';
 import objectHash from 'object-hash';
+import { Lobby } from './lobby';
+
 let peer = new PeerJs(null, {
-	host: 'localhost',
+	host: Lobby.PEER_IP,
 	path: '/peerjs',
-	port: 3000,
+	port: Lobby.PEER_PORT,
 });
 export class Network {
 	public static BUFFER_SIZE = 8

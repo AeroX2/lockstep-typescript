@@ -6,6 +6,7 @@ import { Buffer } from '../network/buffer'
 import { Network } from '../network/network'
 import { Random } from '../utils';
 import { Decimal } from 'decimal.js';
+import { rejects } from 'assert';
 
 export class Game {
 	public static FPS = Math.floor(1000 / 60)
@@ -13,14 +14,17 @@ export class Game {
 	public static GAME_END_COUNTDOWN = 10000
 	public static GAME_END_SCORE_COUNTDOWN = 2000
 
+	public static mouse_x = -1;
+	public static mouse_y = -1;
+
 	//TODO: Make this not a static variable?
 	public static game: number = 0;
 	public static frame: number;
 	public static entity_id: number
 
 	public entities: Entity[]
-	protected canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
-	private ctx: CanvasRenderingContext2D = this.canvas ? this.canvas.getContext('2d') : null
+	protected canvas: HTMLCanvasElement;
+	private ctx: CanvasRenderingContext2D;
 
 	protected current_input: InputPacket;
 	protected input_buffer: Buffer
@@ -33,6 +37,36 @@ export class Game {
 	private score_tallied: boolean;
 	private scores: Map<number, number>
 	private max_scores: number[]
+
+	public constructor(canvas: HTMLCanvasElement) {
+		this.canvas = canvas;
+		this.ctx = this.canvas.getContext('2d');
+
+		window.onkeydown = e => {
+			if (e.key === 'ArrowUp') this.current_input.up = true
+			if (e.key === 'ArrowDown') this.current_input.down = true
+			if (e.key === 'ArrowLeft') this.current_input.left = true
+			if (e.key === 'ArrowRight') this.current_input.right = true
+		}
+
+		window.onkeyup = e => {
+			if (e.key === 'ArrowUp') this.current_input.up = false
+			if (e.key === 'ArrowDown') this.current_input.down = false
+			if (e.key === 'ArrowLeft') this.current_input.left = false
+			if (e.key === 'ArrowRight') this.current_input.right = false
+		}
+
+		window.onmousedown = e => {
+			let rect = this.canvas.getBoundingClientRect();
+			Game.mouse_x = e.clientX - rect.left;
+			Game.mouse_y = e.clientY - rect.top;
+		}
+
+		window.onmouseup = e => {
+			Game.mouse_x = -1;
+			Game.mouse_y = -1;
+		}
+	}
 
 	public setup(): void {
 		Game.game += 1;
@@ -88,19 +122,6 @@ export class Game {
 		this.balls = balls
 		this.entities = this.entities.concat(balls)
 
-		window.onkeydown = e => {
-			if (e.key === 'ArrowUp') this.current_input.up = true
-			if (e.key === 'ArrowDown') this.current_input.down = true
-			if (e.key === 'ArrowLeft') this.current_input.left = true
-			if (e.key === 'ArrowRight') this.current_input.right = true
-		}
-
-		window.onkeyup = e => {
-			if (e.key === 'ArrowUp') this.current_input.up = false
-			if (e.key === 'ArrowDown') this.current_input.down = false
-			if (e.key === 'ArrowLeft') this.current_input.left = false
-			if (e.key === 'ArrowRight') this.current_input.right = false
-		}
 	}
 
 	public simulate(other_inputs: InputPacket[]): void {

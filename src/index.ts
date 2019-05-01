@@ -1,28 +1,68 @@
 import { Network } from './network/network'
 import { Game } from './game/game'
-import { StartPacket, PlayerPacket, ReliablePacket, ChecksumPacket } from './network/reliable_packets'
+import { StartPacket, PlayerPacket, ReliablePacket } from './network/reliable_packets'
 import { Utils } from './utils'
-import objectHash from 'object-hash';
 import { Lobby } from './network/lobby';
+import { Button } from './ui/button';
+
+//TODO: This file is a mess, a refactor is needed.
 
 console.log('Starting up')
-Network.open_socket().then(id => {
-	let peer_id_text = document.getElementById('peer-id-display')
-	peer_id_text.innerText = `Your peer ID is: ${id}`
+Network.open_socket().then((id) => {
+	console.log(`Peer ID is ${id}`)
 })
 
-let game = new Game()
+let canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement
+let ctx: CanvasRenderingContext2D = canvas ? canvas.getContext('2d') : null
+let game = new Game(canvas)
+
 let game_started = false;
-let checksums: { [id: number]: string } = []
+let lobby_started = false;
+
+let unique_lobbies: Set<string> = new Set();
+let lobby_list = document.getElementById('lobby-list');
+
+let lobby_loop = (): void => {
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+
+	ctx.fillText(`${Network.mapping.size+1}/4 clients connected`, canvas.width/2, 200)
+
+	start_button.update(canvas);
+	start_button.draw(ctx);
+
+	setTimeout(() => {
+		if (!game_started) lobby_loop();
+	}, 100)
+}
+let start_lobby = (): void => {
+	lobby_list.parentElement.style.display = 'none';
+	lobby_started = true;
+	lobby_loop();
+}
 
 let menu_loop = (): void => {
 	Lobby.get_lobbies(Network.local_id).then((v) => {
-		let lobbies_list = document.getElementById('lobbies')
-		lobbies_list.innerText = `Lobbies\n${v.lobbies.join('\n')}`
+		for (let lobby of v.lobbies) {
+			if (!unique_lobbies.has(lobby)) {
+				unique_lobbies.add(lobby);
+
+				let button = document.createElement('BUTTON');
+				button.innerText = lobby;
+				button.classList.add('lobby-button')
+				button.onclick = () => {
+					Lobby.connect_lobby(lobby).then((v) => {
+						Network.full_connect(v.lobby)
+						start_lobby();
+					})
+				}
+				lobby_list.appendChild(button);
+			}
+		}
 	})
+
 	setTimeout(() => {
-		if (!game_started) menu_loop();
-	}, 3000)
+		if (!lobby_started) menu_loop();
+	}, 1000)
 }
 menu_loop();
 
@@ -38,21 +78,32 @@ let game_loop = (): void => {
 
 		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 			game.simulate(Network.buffers.map(b => b.popleft()))
-
-			// Network.send_checksum(game.entities)
-
-			// let hash = '';
-			// for (let entity of game.entities.slice(4)) {
-			// 	hash += objectHash({x: entity.x.toNumber(), y: entity.y.toNumber()})
-			// 	hash = objectHash(hash)
-			// }
-			// checksums[Game.frame-1] = hash;
 		}
 		game.draw()
 
 		window.requestAnimationFrame(game_loop)
 	}, Game.FPS)
 }
+let start_button: Button = new Button(canvas.width / 2,
+	500,
+	500,
+	100,
+	"Start",
+	() => { 
+		if (Network.mapping.size === 0) return;
+
+		console.log("Starting game")
+		game_started = true;
+		game_loop();
+
+		let starting_seed = Math.random()
+			.toString(36)
+			.substring(2)
+		Network.send_all_reliable(new StartPacket(starting_seed))
+		Network.send_all_reliable(new PlayerPacket())
+		Utils.set_random_seed(starting_seed)
+	}
+)
 
 //TODO: Probably a nicer way of doing this, instead of callbacks
 let other_players = 0
@@ -74,42 +125,10 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 			game.setup()
 			game_loop()
 		}
-	} else if (data instanceof ChecksumPacket) {
-		if (!checksums[data.frame]) return;
-		if (data.checksum !== checksums[data.frame]) {
-			console.error("Checksum ERROR!")
-			debugger;
-		}
 	}
 })
 
-let connect_button = document.getElementById('connect-button')
-connect_button.addEventListener(
-	'click',
-	(): void => {
-		let textbox = document.getElementById('textbox') as HTMLInputElement
-		Network.full_connect(textbox.value.trim())
-	}
-)
-
-let start_button = document.getElementById('start-button')
-start_button.addEventListener(
-	'click',
-	(): void => {
-		console.log('Starting game')
-
-		let starting_seed = Math.random()
-			.toString(36)
-			.substring(2)
-		Network.send_all_reliable(new StartPacket(starting_seed))
-		Network.send_all_reliable(new PlayerPacket())
-		Utils.set_random_seed(starting_seed)
-	}
-)
-
-
 let lobby_textbox = document.getElementById('lobby-name') as HTMLInputElement
-
 let create_lobby_button = document.getElementById('create-lobby-button')
 create_lobby_button.addEventListener(
 	'click',
@@ -118,17 +137,6 @@ create_lobby_button.addEventListener(
 			.catch((r) => {
 				console.log(r);
 			})
-	}
-)
-
-let connect_lobby_button = document.getElementById('connect-lobby-button')
-connect_lobby_button.addEventListener(
-	'click',
-	(): void => {
-		Lobby.connect_lobby(lobby_textbox.value).then((v) => {
-			Network.full_connect(v.lobby)
-		}).catch((r) => {
-			console.log(r);
-		})
+		start_lobby();
 	}
 )

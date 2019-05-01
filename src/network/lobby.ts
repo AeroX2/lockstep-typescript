@@ -1,14 +1,18 @@
 export class Lobby {
+	public static PEER_IP = "localhost";
+	public static PEER_PORT = 3000;
+    private static SERVER_URL = `http://${Lobby.PEER_IP}:${Lobby.PEER_PORT}`
+
     public static get_lobbies(peer_id: string): Promise<any> {
-        return this.request2('GET', 'http://localhost:3000/lobbies', { peerId: peer_id })
+        return this.request2('GET', `${Lobby.SERVER_URL}/lobbies`, { peerId: peer_id })
     }
 
     public static create_lobby(peer_id: string, name: string): Promise<string> {
-        return this.request2('POST', 'http://localhost:3000/create-lobby', { peerId: peer_id, lobbyName: name })
+        return this.request2('POST', `${Lobby.SERVER_URL}/create-lobby`, { peerId: peer_id, lobbyName: name })
     }
 
     public static connect_lobby(name: string): Promise<any> {
-        return this.request2('POST', 'http://localhost:3000/connect-lobby', { lobbyName: name })
+        return this.request2('POST', `${Lobby.SERVER_URL}/connect-lobby`, { lobbyName: name })
     }
 
     // Using callbacks:
