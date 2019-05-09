@@ -69,21 +69,26 @@ menu_loop();
 let game_loop = (): void => {
 	game_started = true;
 	setTimeout(() => {
-		game.add_input()
 
-		let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
-		let sliderValue = parseInt(slider.value) / 100.0
-		document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
-		Network.send_input_buffer(game.old_input_buffer, sliderValue)
+		// Make sure the setup has been run before starting running the game
+		if (!setup_not_run) {
+			game.add_input()
 
-		if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
-			game.simulate(Network.buffers.map(b => b.popleft()))
+			let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
+			let sliderValue = parseInt(slider.value) / 100.0
+			document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
+			Network.send_input_buffer(game.old_input_buffer, sliderValue)
+
+			if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
+				game.simulate(Network.buffers.map(b => b.popleft()))
+			}
+			game.draw()
 		}
-		game.draw()
 
 		window.requestAnimationFrame(game_loop)
 	}, Game.FPS)
 }
+
 let start_button: Button = new Button(canvas.width / 2,
 	500,
 	500,
@@ -91,10 +96,6 @@ let start_button: Button = new Button(canvas.width / 2,
 	"Start",
 	() => { 
 		if (Network.mapping.size === 0) return;
-
-		console.log("Starting game")
-		game_started = true;
-		game_loop();
 
 		let starting_seed = Math.random()
 			.toString(36)
@@ -119,8 +120,9 @@ Network.reliable_callbacks.push((_: string, data: ReliablePacket) => {
 		console.log('Received PlayerPacket acknowledgement command')
 
 		other_players += 1
-		// We have got everyones elses positions, now we can start the game
-		if (other_players >= Network.mapping.size && setup_not_run) {
+
+		// Once we have got everyones elses positions, we can start the game
+		if (other_players >= Network.mapping.size-1 && setup_not_run) {
 			setup_not_run = false;
 			game.setup()
 			game_loop()
