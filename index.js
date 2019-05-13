@@ -5,16 +5,15 @@ let randomRange = (start,end) => {
 }
 
 let launch = (async () => {
-  let headless = false;
+  let headless = true;
   if (headless) console.log('Running in headless mode')
   else console.log('Running normally')
 
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
   await page.setViewport({width: 10000, height: 10000})
-  await page.goto('http://localhost:8080');
-  await page.type('#textbox', process.argv[2].trim());
-  await page.click('#connect-button');
+  await page.goto('http://lockstep.zapto.org');
+  await page.click('#lobby-list button');
   await page.on("pageerror", function(err) {  
     console.log("Page error:", err.toString()); 
   });
@@ -30,7 +29,7 @@ let launch = (async () => {
   loop();
 });
 
-launch();
+//launch();
 setTimeout(() => {
   launch();
 }, 1000)

@@ -25,10 +25,26 @@ export class Player extends Entity implements Movable, ElasticCollision, Collida
 		if (i.right) this.vx = this.vx.plus(this.speed)
 	}
 
+	public invert_color(hexTripletColor: string): string {
+		let color = hexTripletColor;
+		color = color.substring(1); // remove #
+		let i_color = parseInt(color, 16); // convert to integer
+		let invert_color = 0xFFFFFF ^ i_color; // invert three bytes
+		color = invert_color.toString(16); // convert to hex
+		color = ("000000" + color).slice(-6); // pad with leading zeros
+		color = "#" + color; // prepend #
+		return color;
+	}
+
 	public draw(ctx: CanvasRenderingContext2D): void {
-		ctx.fillStyle = this.colour
+		ctx.fillStyle = this.invert_color(this.colour);
 		ctx.beginPath()
 		ctx.arc(this.x.toNumber(), this.y.toNumber(), this.radius, 0, 2 * Math.PI)
+		ctx.fill()
+
+		ctx.fillStyle = this.colour
+		ctx.beginPath()
+		ctx.arc(this.x.toNumber(), this.y.toNumber(), this.radius-5, 0, 2 * Math.PI)
 		ctx.fill()
 	}
 }
