@@ -21,7 +21,10 @@ app.post('/create-lobby', (req, res, _) => {
     console.log(req.body)
     let peer_id = req.body.peerId;
     let lobby_name = req.body.lobbyName;
-    if (!peer_id || !lobby_name) return;
+    if (!peer_id || !lobby_name) {
+        res.status(409)
+        return;
+    }
     
     if (!lobbies.has(lobby_name)) {
         lobbies.set(lobby_name,peer_id)
@@ -33,7 +36,10 @@ app.post('/create-lobby', (req, res, _) => {
 });
 app.post('/connect-lobby', (req, res, _) => {
     let lobby_name = req.body.lobbyName;
-    if (!lobby_name) return;
+    if (!lobby_name) {
+	res.status(409);
+        return;
+    }
 
     if (lobbies.has(lobby_name)) {
         res.send({ lobby: lobbies.get(lobby_name) });

@@ -43,6 +43,7 @@ export class Game {
 		this.ctx = this.canvas.getContext('2d');
 
 		window.onkeydown = e => {
+			if (!this.current_input) return;
 			if (e.key === 'ArrowUp') this.current_input.up = true
 			if (e.key === 'ArrowDown') this.current_input.down = true
 			if (e.key === 'ArrowLeft') this.current_input.left = true
@@ -50,6 +51,7 @@ export class Game {
 		}
 
 		window.onkeyup = e => {
+			if (!this.current_input) return;
 			if (e.key === 'ArrowUp') this.current_input.up = false
 			if (e.key === 'ArrowDown') this.current_input.down = false
 			if (e.key === 'ArrowLeft') this.current_input.left = false

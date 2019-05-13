@@ -25,7 +25,8 @@ let lobby_list = document.getElementById('lobby-list');
 let lobby_loop = (): void => {
 	ctx.clearRect(0,0,canvas.width,canvas.height);
 
-	ctx.fillText(`${Network.mapping.size+1}/4 clients connected`, canvas.width/2, 200)
+	let connections = Math.min(Network.mapping.size, Network.unreliable_connections.length, Network.reliable_connections.length)+1
+	ctx.fillText(`${connections}/4 clients connected`, canvas.width/2, 200)
 
 	start_button.update(canvas);
 	start_button.draw(ctx);
@@ -74,10 +75,11 @@ let game_loop = (): void => {
 		if (!setup_not_run) {
 			game.add_input()
 
-			let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
-			let sliderValue = parseInt(slider.value) / 100.0
-			document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
-			Network.send_input_buffer(game.old_input_buffer, sliderValue)
+			//let slider = document.getElementById('packet-loss-slider') as HTMLInputElement
+			//let sliderValue = parseInt(slider.value) / 100.0
+			//document.getElementById('packet-loss-display').innerText = `Packet loss: ${sliderValue}`
+
+			Network.send_input_buffer(game.old_input_buffer, 0)
 
 			if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 				game.simulate(Network.buffers.map(b => b.popleft()))
@@ -96,6 +98,7 @@ let start_button: Button = new Button(canvas.width / 2,
 	"Start",
 	() => { 
 		if (Network.mapping.size === 0) return;
+		if (Network.reliable_connections.length !== Network.unreliable_connections.length) return;
 
 		let starting_seed = Math.random()
 			.toString(36)
@@ -136,9 +139,11 @@ create_lobby_button.addEventListener(
 	'click',
 	(): void => {
 		Lobby.create_lobby(Network.local_id, lobby_textbox.value)
+			.then(() => {
+				start_lobby();
+			})
 			.catch((r) => {
 				console.log(r);
 			})
-		start_lobby();
 	}
 )

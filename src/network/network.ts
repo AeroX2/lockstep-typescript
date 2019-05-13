@@ -9,9 +9,13 @@ import objectHash from 'object-hash';
 import { Lobby } from './lobby';
 
 let peer = new PeerJs(null, {
-	host: Lobby.PEER_IP,
+	host: '/',
 	path: '/peerjs',
 	port: Lobby.PEER_PORT,
+	config: {'iceServers': [
+		{ urls: 'stun:lockstep.zapto.org:443' },
+		{ urls: 'turn:lockstep.zapto.org:443', username: 'james', credential: 'groot' }
+	]}
 });
 export class Network {
 	public static BUFFER_SIZE = 8
@@ -27,8 +31,8 @@ export class Network {
 	public static local_id: string
 	public static buffers: Buffer[] = []
 
-	private static reliable_connections: DataConnection[] = []
-	private static unreliable_connections: DataConnection[] = []
+	public static reliable_connections: DataConnection[] = []
+	public static unreliable_connections: DataConnection[] = []
 
 	private static received_frames: number[][] = [];
 	private static acknowledged_frames: number[][] = [];

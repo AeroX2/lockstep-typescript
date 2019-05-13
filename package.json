@@ -9,6 +9,7 @@
     "watch": "webpack --config webpack.prod.js --watch",
     "test": "webpack --config webpack.testing.js",
     "start": "webpack-dev-server --open --config webpack.dev.js",
+    "debug": "webpack-dev-server --host 0.0.0.0 --config webpack.dev.js",
     "lint": "eslint ./**/*.ts"
   },
   "keywords": [],

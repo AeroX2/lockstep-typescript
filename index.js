@@ -12,10 +12,13 @@ let launch = (async () => {
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
   await page.setViewport({width: 10000, height: 10000})
-  await page.goto('http://lockstep.zapto.org');
+  await page.goto('http://lockstep.zapto.org:8080');
   await page.click('#lobby-list button');
-  await page.on("pageerror", function(err) {  
+  await page.on("pageerror", (err) => {  
     console.log("Page error:", err.toString()); 
+  });
+  await page.on('console', msg => {
+    console.log(msg.text());
   });
 
   let loop = async () => {
