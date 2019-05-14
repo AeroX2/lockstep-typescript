@@ -12,7 +12,7 @@ let launch = (async () => {
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
 
-  await page.setViewport({width: 10000, height: 10000})
+  await page.setViewport({width: 1000, height: 1000})
   await page.goto('http://lockstep.zapto.org');
   await page.waitFor(1000);
   await page.click('#lobby-list button');

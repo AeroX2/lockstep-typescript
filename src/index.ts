@@ -57,6 +57,9 @@ let menu_loop = (): void => {
 					})
 				}
 				lobby_list.appendChild(button);
+
+				let break_e = document.createElement('BR');
+				lobby_list.appendChild(break_e);
 			}
 		}
 	})
