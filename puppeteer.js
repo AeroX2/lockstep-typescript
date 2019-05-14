@@ -5,14 +5,16 @@ let randomRange = (start,end) => {
 }
 
 let launch = (async () => {
-  let headless = true;
+  let headless = false;
   if (headless) console.log('Running in headless mode')
   else console.log('Running normally')
 
   const browser = await puppeteer.launch({headless: headless});
   const page = await browser.newPage();
+
   await page.setViewport({width: 10000, height: 10000})
-  await page.goto('http://lockstep.zapto.org:8080');
+  await page.goto('http://lockstep.zapto.org');
+  await page.waitFor(1000);
   await page.click('#lobby-list button');
   await page.on("pageerror", (err) => {  
     console.log("Page error:", err.toString()); 
