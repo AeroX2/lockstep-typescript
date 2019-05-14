@@ -15,6 +15,7 @@ export class Player extends Entity implements Movable, ElasticCollision, Collida
 		super()
 		this.x = new Decimal(x)
 		this.y = new Decimal(y)
+		Random.int32();
 		this.colour = randomColor({ luminosity: 'dark', seed: Random.int32() })
 	}
 
