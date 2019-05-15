@@ -5,8 +5,6 @@ module.exports = merge(common, {
     mode: 'development',
     devtool: 'inline-source-map',
     devServer: {
-        compress: true,
-        public: 'lockstep.zapto.org',
         contentBase: './dist'
     }
 });

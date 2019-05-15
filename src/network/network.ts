@@ -8,6 +8,8 @@ import { Entity } from '../game/entity';
 import objectHash from 'object-hash';
 import { Lobby } from './lobby';
 
+import { encode, decode } from "@msgpack/msgpack";
+
 let peer = new PeerJs(null, {
 	host: '/',
 	path: '/peerjs',
@@ -32,7 +34,7 @@ export class Network {
 	public static buffers: Buffer[] = []
 
 	public static reliable_connections: DataConnection[] = []
-	public static unreliable_connections: DataConnection[] = []
+	public static unreliable_connections: any[] = []
 
 	private static received_frames: number[][] = [];
 	private static acknowledged_frames: number[][] = [];
@@ -68,8 +70,10 @@ export class Network {
 		})
 	}
 
-	private static connection_opened(conn: DataConnection): void {
+	private static connection_opened(conn: any): void {
 		console.log(`${conn.reliable ? 'Reliable' : 'Unreliable'} Connection opened with ${conn.peer}`)
+
+		if (conn.reliable) {
 		let index = Network.mapping.get(conn.peer)
 		if (index === undefined) {
 			index = Network.index
@@ -78,7 +82,7 @@ export class Network {
 			// Javascript is weird (let a = []; a[2] = 4; a == [empty,empty,4])
 			// Network.reliable_connections.push(null)
 			// Network.unreliable_connections.push(null)
-		}
+		}}
 
 		if (conn.reliable) {
 			Network.reliable_connections.push(conn);
@@ -95,11 +99,18 @@ export class Network {
 			})
 		} else {
 			Network.unreliable_connections.push(conn)
-			conn.on('open', () => {
-				conn.on('data', (data: UnreliablePacket) => {
-					Network.receive_unreliable(conn.peer, data)
-				})
-			})
+			//conn.on('open', () => {
+			//	conn.on('data', (data: UnreliablePacket) => {
+			//		Network.receive_unreliable(conn.peer, data)
+			//	})
+			//})
+			//
+			conn.onopen = () => {
+			}
+			conn.onmessage = (data: any) => {
+				let x: any = decode(data.data);
+				Network.receive_unreliable(x.peer, x);
+			}
 		}
 	}
 
@@ -144,19 +155,39 @@ export class Network {
 		})
 	}
 
+	public static blub(): void {
+		let conn = new WebSocket('ws://lockstep.zapto.org:8080');
+		conn.binaryType = 'arraybuffer';
+
+		conn.onopen = () => {
+			//Network.unreliable_connections.push(conn)
+			Network.connection_opened(conn)
+		}
+		conn.onmessage = (data: any) => {
+			let x: any = decode(data.data)
+			Network.receive_unreliable(x.peer, x)
+		}
+	}
+
 	private static open_unreliable(peer_id: string): Promise<void> {
 		return new Promise(async resolve => {
-			let conn = peer.connect(peer_id)
-			conn.on('open', () => {
-				Network.unreliable_connections.push(conn)
-				conn.on('data', (data: UnreliablePacket) => {
-					Network.receive_unreliable(conn.peer, data)
-				})
+			//let conn = peer.connect(peer_id)
+			let conn = new WebSocket('ws://lockstep.zapto.org:8080');
+			conn.binaryType = 'arraybuffer';
+
+			conn.onopen = () => {
+				//Network.unreliable_connections.push(conn)
+				Network.connection_opened(conn)
 				resolve()
-			})
-			conn.on('error', (error: string) => {
+			}
+			conn.onmessage = (data: any) => {
+				let x: any = decode(data.data)
+				Network.receive_unreliable(x.peer, x)
+			}
+
+			conn.onerror = (error: any) => {
 				throw new Error(`Unable to make unreliable connection: ${error}`)
-			})
+			}
 		})
 	}
 
@@ -212,13 +243,17 @@ export class Network {
 
 
 			for (let input of data) {
+				input['peer'] = Network.local_id;
 				if (!Network.acknowledged_frames.includes(input)) {
-					if (Math.random() >= packet_loss) conn.send(input)
+					if (Math.random() >= packet_loss) conn.send(encode(input))
 					else console.log('Simulating a lost packet')
 				}
 			}
 
-			conn.send(new AckPacket(Game.game, Network.received_frames[index]).raw())
+			let x = new AckPacket(Game.game, Network.received_frames[index]).raw();
+			x['peer'] = Network.local_id;
+
+			conn.send(encode(x))
 			Network.received_frames[index] = [];
 		}
 		
@@ -250,18 +285,6 @@ export class Network {
 					array.splice(i, 1)	
 				}
 			}
-		}
-	}
-
-	public static send_checksum(entities: Entity[]): void {
-		let hash = '';
-		for (let entity of entities.slice(4)) {
-			hash += objectHash({x: entity.x.toNumber(), y: entity.y.toNumber()})
-			hash = objectHash(hash)
-		}
-		for (let index = 0; index < Network.reliable_connections.length; index++) {
-			let conn = Network.reliable_connections[index]
-			conn.send(new ChecksumPacket(Game.frame-1, hash).raw());
 		}
 	}
 }

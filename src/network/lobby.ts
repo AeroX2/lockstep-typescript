@@ -1,5 +1,5 @@
 export class Lobby {
-	public static PEER_IP = "lockstep.zapto.org";
+	public static PEER_IP = "localhost";
 	public static PEER_PORT = 3000;
     private static SERVER_URL = `http://${Lobby.PEER_IP}:${Lobby.PEER_PORT}`
 

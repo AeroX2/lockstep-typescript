@@ -100,8 +100,8 @@ let start_button: Button = new Button(canvas.width / 2,
 	100,
 	"Start",
 	() => { 
-		if (Network.mapping.size === 0) return;
-		if (Network.reliable_connections.length !== Network.unreliable_connections.length) return;
+		//if (Network.mapping.size === 0) return;
+		//if (Network.reliable_connections.length !== Network.unreliable_connections.length) return;
 
 		let starting_seed = Math.random()
 			.toString(36)
@@ -141,6 +141,8 @@ let create_lobby_button = document.getElementById('create-lobby-button')
 create_lobby_button.addEventListener(
 	'click',
 	(): void => {
+		Network.blub();
+
 		Lobby.create_lobby(Network.local_id, lobby_textbox.value)
 			.then(() => {
 				start_lobby();
