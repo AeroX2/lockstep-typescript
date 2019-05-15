@@ -15,10 +15,12 @@ let peer = new PeerJs(null, {
 	config: {'iceServers': [
 		{ urls: 'stun:lockstep.zapto.org:443' },
 		{ urls: 'turn:lockstep.zapto.org:443', username: 'james', credential: 'groot' }
-	]}
+		],
+		iceTransportPolicy: "all"
+	}
 });
 export class Network {
-	public static BUFFER_SIZE = 8
+	public static BUFFER_SIZE = 11
 	public static RETRY_AMOUNT = 5
 
 	public static ignore_packets: boolean = false;

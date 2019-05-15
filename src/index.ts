@@ -84,6 +84,8 @@ let game_loop = (): void => {
 
 			Network.send_input_buffer(game.old_input_buffer, 0)
 
+			//console.log(Network.buffers.map(b => b.length()).join(' '))
+
 			if (Network.buffers.map(b => b.peek()).every(v => v && v.frame === Game.frame)) {
 				game.simulate(Network.buffers.map(b => b.popleft()))
 			}

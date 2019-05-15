@@ -25,7 +25,7 @@ export class Buffer {
 		if (!this.buffer.map(v => v.frame).includes(data.frame)) this.buffer.push(data)
 		this.buffer = this.buffer.sort((a, b) => a.frame - b.frame)
 
-		if (this.buffer.length > Network.BUFFER_SIZE) this.filled = true
+		if (this.buffer.length >= Network.BUFFER_SIZE) this.filled = true
 	}
 
 	//TODO: Replace this with a more efficient method
